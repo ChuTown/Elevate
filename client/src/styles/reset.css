@@ -1,0 +1,15 @@
+/**
+ * Minimal reset — normalize box model and remove default margins.
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}

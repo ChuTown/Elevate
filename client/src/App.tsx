@@ -1,16 +1,11 @@
-import { Routes, Route } from 'react-router-dom'
-import HomePage from './pages/HomePage'
-import CreateProfile from './pages/CreateProfile'
-import ProfileBuilder from './pages/ProfileBuilder'
+import NavBar from './components/NavBar'
+import { AppRoutes } from './routes'
 
 export default function App() {
   return (
     <div id="app-root">
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/create-profile" element={<CreateProfile />} />
-        <Route path="/profile-builder" element={<ProfileBuilder />} />
-      </Routes>
+      <NavBar />
+      <AppRoutes />
     </div>
   )
 }

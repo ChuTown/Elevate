@@ -1,0 +1,18 @@
+/**
+ * Global styles — imports design tokens and reset, then app-level layout.
+ * This is the single entry point for global CSS. Import only this in main.tsx.
+ */
+@import './variables.css';
+@import './reset.css';
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+#app-root {
+  width: 100%;
+  height: 100%;
+}

@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom'
-import './CreateProfile.css'
+import styles from './CreateProfile.module.css'
 
 export default function CreateProfile() {
   return (
-    <main>
+    <main className={styles.page}>
       <h1>Create profile</h1>
       <p>Profile creation form goes here.</p>
       <Link to="/">Back to home</Link>
