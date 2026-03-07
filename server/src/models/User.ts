@@ -4,6 +4,8 @@ const profileSchema = new mongoose.Schema(
   {
     firstName: { type: String, required: true, trim: true },
     lastName: { type: String, required: true, trim: true },
+    profilePhotoUrl: { type: String, trim: true, default: "" },
+    profilePhotoPublicId: { type: String, trim: true, default: "" },
     professionalTitle: { type: String, required: true, trim: true },
     yearsOfExperience: { type: Number, min: 0, max: 60, default: 0 },
     primaryIndustry: { type: String, trim: true, default: "" },

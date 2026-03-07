@@ -6,6 +6,8 @@ type ProfileFormState = {
   email: string
   firstName: string
   lastName: string
+  profilePhotoUrl: string
+  profilePhotoPublicId: string
   professionalTitle: string
   yearsOfExperience: number
   primaryIndustry: string
@@ -20,6 +22,8 @@ export default function ProfileBuilder() {
     email: '',
     firstName: '',
     lastName: '',
+    profilePhotoUrl: '',
+    profilePhotoPublicId: '',
     professionalTitle: '',
     yearsOfExperience: 0,
     primaryIndustry: '',
@@ -28,11 +32,22 @@ export default function ProfileBuilder() {
     currentRole: '',
     currentCompany: '',
   })
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
 
   function updateField<K extends keyof ProfileFormState>(key: K, value: ProfileFormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  async function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, timeoutMs = 15000) {
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      return await fetch(input, { ...init, signal: controller.signal })
+    } finally {
+      window.clearTimeout(timeoutId)
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -47,10 +62,43 @@ export default function ProfileBuilder() {
     setMessage('Saving profile...')
 
     try {
-      const response = await fetch('/api/users/profile', {
+      let uploadedPhotoUrl = form.profilePhotoUrl
+      let uploadedPhotoPublicId = form.profilePhotoPublicId
+
+      if (selectedPhoto) {
+        setMessage('Uploading photo...')
+        const imageFormData = new FormData()
+        imageFormData.append('photo', selectedPhoto)
+
+        const uploadResponse = await fetchWithTimeout('/api/users/profile/photo', {
+          method: 'POST',
+          body: imageFormData,
+        })
+
+        const uploadResult = (await uploadResponse.json()) as {
+          profilePhotoUrl?: string
+          profilePhotoPublicId?: string
+          error?: string
+        }
+
+        if (!uploadResponse.ok) {
+          setMessage(uploadResult.error || 'Failed to upload profile photo.')
+          return
+        }
+
+        uploadedPhotoUrl = uploadResult.profilePhotoUrl || ''
+        uploadedPhotoPublicId = uploadResult.profilePhotoPublicId || ''
+      }
+
+      setMessage('Saving profile...')
+      const response = await fetchWithTimeout('/api/users/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          profilePhotoUrl: uploadedPhotoUrl,
+          profilePhotoPublicId: uploadedPhotoPublicId,
+        }),
       })
 
       const result = (await response.json()) as { error?: string }
@@ -65,6 +113,8 @@ export default function ProfileBuilder() {
         email: '',
         firstName: '',
         lastName: '',
+        profilePhotoUrl: '',
+        profilePhotoPublicId: '',
         professionalTitle: '',
         yearsOfExperience: 0,
         primaryIndustry: '',
@@ -73,8 +123,13 @@ export default function ProfileBuilder() {
         currentRole: '',
         currentCompany: '',
       })
-    } catch {
-      setMessage('Unable to reach backend. Make sure the server is running.')
+      setSelectedPhoto(null)
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setMessage('Request timed out. Check backend/Cloudinary config and try again.')
+      } else {
+        setMessage('Unable to reach backend. Make sure the server is running.')
+      }
     } finally {
       setIsSaving(false)
     }
@@ -121,6 +176,14 @@ export default function ProfileBuilder() {
           onChange={(event) => updateField('professionalTitle', event.target.value)}
           placeholder="Senior Product Designer"
           required
+        />
+
+        <label htmlFor="profilePhoto">Profile photo</label>
+        <input
+          id="profilePhoto"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          onChange={(event) => setSelectedPhoto(event.target.files?.[0] || null)}
         />
 
         <label htmlFor="yearsOfExperience">Years of experience</label>

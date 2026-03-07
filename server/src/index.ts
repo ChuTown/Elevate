@@ -2,13 +2,35 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import multer from "multer";
 import { User } from "./models/User.js";
+import cloudinary from "./config/cloudinary.js";
 import { config } from "./config.js";
 import { createAuthRouter } from "./routes/auth.js";
 import { loadSession } from "./middleware/session.js";
 
 const { PORT, FRONTEND_ORIGIN } = config;
 const app = express();
+const DEFAULT_PROFILE_IMAGE_URL =
+  process.env.DEFAULT_PROFILE_IMAGE_URL ||
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/User-avatar.svg/1280px-User-avatar.svg.png";
+const CLOUDINARY_CONFIGURED = Boolean(
+  process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+);
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+    if (!allowedTypes.has(file.mimetype)) {
+      cb(new Error("Only JPG, PNG, or WEBP images are allowed"));
+      return;
+    }
+    cb(null, true);
+  },
+});
 
 app.use(
   cors({
@@ -38,6 +60,21 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
+app.get("/api/users/featured", async (req, res) => {
+  try {
+    const featuredUsers = await User.find({
+      profile: { $exists: true, $ne: null },
+    })
+      .sort({ updatedAt: -1 })
+      .limit(8)
+      .select("name email profile");
+
+    res.json(featuredUsers);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch featured users" });
+  }
+});
+
 app.post("/api/users", async (req, res) => {
   try {
     const { name, email } = req.body;
@@ -57,12 +94,58 @@ app.post("/api/users", async (req, res) => {
   }
 });
 
+app.post("/api/users/profile/photo", upload.single("photo"), async (req, res) => {
+  try {
+    if (!CLOUDINARY_CONFIGURED) {
+      return res.status(500).json({ error: "Cloudinary is not configured on the server" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Profile photo is required" });
+    }
+    const file = req.file;
+
+    const uploadResult = await new Promise<{ secure_url: string; public_id: string }>(
+      (resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: "elevate/profile-pictures",
+            resource_type: "image",
+            transformation: [{ width: 300, height: 300, crop: "fill", gravity: "face" }],
+          },
+          (error, result) => {
+            if (error || !result) {
+              reject(error || new Error("Failed to upload image"));
+              return;
+            }
+            resolve({ secure_url: result.secure_url, public_id: result.public_id });
+          }
+        );
+
+        uploadStream.end(file.buffer);
+      }
+    );
+
+    res.status(201).json({
+      profilePhotoUrl: uploadResult.secure_url,
+      profilePhotoPublicId: uploadResult.public_id,
+    });
+  } catch (err) {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ error: err.message });
+    }
+    res.status(500).json({ error: "Failed to upload profile photo" });
+  }
+});
+
 app.post("/api/users/profile", async (req, res) => {
   try {
     const {
       email,
       firstName,
       lastName,
+      profilePhotoUrl,
+      profilePhotoPublicId,
       professionalTitle,
       yearsOfExperience,
       primaryIndustry,
@@ -93,6 +176,12 @@ app.post("/api/users/profile", async (req, res) => {
         profile: {
           firstName: normalizedFirstName,
           lastName: normalizedLastName,
+          profilePhotoUrl:
+            typeof profilePhotoUrl === "string" && profilePhotoUrl.trim()
+              ? profilePhotoUrl.trim()
+              : DEFAULT_PROFILE_IMAGE_URL,
+          profilePhotoPublicId:
+            typeof profilePhotoPublicId === "string" ? profilePhotoPublicId.trim() : "",
           professionalTitle: String(professionalTitle).trim(),
           yearsOfExperience: Number.isFinite(Number(yearsOfExperience))
             ? Number(yearsOfExperience)
