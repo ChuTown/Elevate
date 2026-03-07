@@ -47,6 +47,68 @@ app.post("/api/users", async (req, res) => {
   }
 });
 
+app.post("/api/users/profile", async (req, res) => {
+  try {
+    const {
+      email,
+      firstName,
+      lastName,
+      professionalTitle,
+      yearsOfExperience,
+      primaryIndustry,
+      location,
+      currentRole,
+      currentCompany,
+      summary,
+    } = req.body;
+
+    if (!email || !firstName || !lastName || !professionalTitle) {
+      return res
+        .status(400)
+        .json({
+          error: "email, firstName, lastName, and professionalTitle are required",
+        });
+    }
+
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const normalizedFirstName = String(firstName).trim();
+    const normalizedLastName = String(lastName).trim();
+    const normalizedName = `${normalizedFirstName} ${normalizedLastName}`.trim();
+
+    const user = await User.findOneAndUpdate(
+      { email: normalizedEmail },
+      {
+        name: normalizedName,
+        email: normalizedEmail,
+        profile: {
+          firstName: normalizedFirstName,
+          lastName: normalizedLastName,
+          professionalTitle: String(professionalTitle).trim(),
+          yearsOfExperience: Number.isFinite(Number(yearsOfExperience))
+            ? Number(yearsOfExperience)
+            : 0,
+          primaryIndustry: String(primaryIndustry || "").trim(),
+          location: String(location || "").trim(),
+          currentRole: String(currentRole || "").trim(),
+          currentCompany: String(currentCompany || "").trim(),
+          summary: String(summary || "").trim(),
+        },
+      },
+      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+    );
+
+    res.status(201).json(user);
+  } catch (err) {
+    if (err instanceof mongoose.Error.ValidationError) {
+      return res.status(400).json({ error: err.message });
+    }
+    if (err instanceof mongoose.mongo.MongoServerError && err.code === 11000) {
+      return res.status(409).json({ error: "Email already in use" });
+    }
+    res.status(500).json({ error: "Failed to create profile" });
+  }
+});
+
 mongoose
   .connect(process.env.MONGO_URI as string)
   .then(() => console.log("MongoDB connected"))

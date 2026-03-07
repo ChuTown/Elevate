@@ -8,7 +8,7 @@ export default function ProfileButton({ label = 'Create Profile' }: ProfileButto
   const navigate = useNavigate()
 
   return (
-    <button type="button" onClick={() => navigate('/create-profile')}>
+    <button type="button" onClick={() => navigate('/profile-builder')}>
       {label}
     </button>
   )

@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import HomePage from './pages/HomePage'
 import CreateProfile from './pages/CreateProfile'
+import ProfileBuilder from './pages/ProfileBuilder'
 
 export default function App() {
   return (
@@ -8,8 +9,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/create-profile" element={<CreateProfile />} />
+        <Route path="/profile-builder" element={<ProfileBuilder />} />
       </Routes>
     </div>
   )
 }
-
