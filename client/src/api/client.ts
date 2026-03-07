@@ -1,0 +1,20 @@
+import axios from "axios";
+import { apiBaseUrl } from "../config";
+
+export const api = axios.create({
+  baseURL: apiBaseUrl || undefined,
+  withCredentials: true,
+  headers: { "Content-Type": "application/json" },
+});
+
+export interface ApiUser {
+  _id: string;
+  email: string;
+  name: string;
+  profile?: {
+    firstName?: string;
+    lastName?: string;
+    professionalTitle?: string;
+    [key: string]: unknown;
+  };
+}

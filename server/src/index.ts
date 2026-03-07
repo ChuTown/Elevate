@@ -1,15 +1,25 @@
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
-import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 import { User } from "./models/User.js";
+import { config } from "./config.js";
+import { createAuthRouter } from "./routes/auth.js";
+import { loadSession } from "./middleware/session.js";
 
-dotenv.config();
-
+const { PORT, FRONTEND_ORIGIN } = config;
 const app = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: FRONTEND_ORIGIN,
+    credentials: true,
+  })
+);
 app.use(express.json());
+app.use(cookieParser());
+app.use(loadSession);
+app.use("/api/auth", createAuthRouter());
 
 app.get("/", (req, res) => {
   res.send("API running");
@@ -113,9 +123,6 @@ mongoose
   .connect(process.env.MONGO_URI as string)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error(err));
-
-// Must match API_PORT in client/vite.config.ts proxy (avoid 5000 - macOS AirPlay uses it)
-const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
