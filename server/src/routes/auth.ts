@@ -21,49 +21,15 @@ export function createAuthRouter() {
     SESSION_COOKIE_NAME,
     SESSION_MAX_AGE_MS,
     NODE_ENV,
-    ALLOW_DYNAMIC_FRONTEND_ORIGIN,
   } = config;
   const GOOGLE_REDIRECT_URI = `${API_ORIGIN}${GOOGLE_REDIRECT_PATH}`;
   const isProduction = NODE_ENV === "production";
-
-  function getSafeFrontendOrigin(raw: unknown) {
-    if (!ALLOW_DYNAMIC_FRONTEND_ORIGIN || typeof raw !== "string" || !raw.trim()) {
-      return FRONTEND_ORIGIN;
-    }
-    try {
-      const parsed = new URL(raw);
-      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-        return FRONTEND_ORIGIN;
-      }
-      return parsed.origin;
-    } catch {
-      return FRONTEND_ORIGIN;
-    }
-  }
-
-  function readFrontendOriginFromState(state: unknown) {
-    if (typeof state !== "string" || !state) {
-      return FRONTEND_ORIGIN;
-    }
-    try {
-      const decoded = Buffer.from(state, "base64url").toString("utf8");
-      const parsed = JSON.parse(decoded) as { frontendOrigin?: unknown };
-      return getSafeFrontendOrigin(parsed.frontendOrigin);
-    } catch {
-      return FRONTEND_ORIGIN;
-    }
-  }
 
   router.get("/google", (req: Request, res: Response) => {
     if (!GOOGLE_CLIENT_ID) {
       return res.redirect(`${FRONTEND_ORIGIN}/login?error=oauth_not_configured`);
     }
-    const frontendOrigin = getSafeFrontendOrigin(req.query.frontend_origin);
-    const statePayload = {
-      nonce: Math.random().toString(36).slice(2),
-      frontendOrigin,
-    };
-    const state = Buffer.from(JSON.stringify(statePayload), "utf8").toString("base64url");
+    const state = Math.random().toString(36).slice(2);
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
       redirect_uri: GOOGLE_REDIRECT_URI,
@@ -78,17 +44,16 @@ export function createAuthRouter() {
 
   router.get("/google/callback", async (req: Request, res: Response) => {
     const { code, error } = req.query;
-    const redirectFrontendOrigin = readFrontendOriginFromState(req.query.state);
     if (error) {
       return res.redirect(
-        `${redirectFrontendOrigin}/login?error=${encodeURIComponent(String(error))}`
+        `${FRONTEND_ORIGIN}/login?error=${encodeURIComponent(String(error))}`
       );
     }
     if (!code || typeof code !== "string") {
-      return res.redirect(`${redirectFrontendOrigin}/login?error=missing_code`);
+      return res.redirect(`${FRONTEND_ORIGIN}/login?error=missing_code`);
     }
     if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-      return res.redirect(`${redirectFrontendOrigin}/login?error=oauth_not_configured`);
+      return res.redirect(`${FRONTEND_ORIGIN}/login?error=oauth_not_configured`);
     }
     try {
       const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
@@ -109,14 +74,14 @@ export function createAuthRouter() {
       };
       if (!tokenRes.ok || data.error || !data.access_token) {
         return res.redirect(
-          `${redirectFrontendOrigin}/login?error=${encodeURIComponent(data.error ?? "token_exchange_failed")}`
+          `${FRONTEND_ORIGIN}/login?error=${encodeURIComponent(data.error ?? "token_exchange_failed")}`
         );
       }
       const userinfoRes = await fetch(GOOGLE_USERINFO_URL, {
         headers: { Authorization: `Bearer ${data.access_token}` },
       });
       if (!userinfoRes.ok) {
-        return res.redirect(`${redirectFrontendOrigin}/login?error=userinfo_failed`);
+        return res.redirect(`${FRONTEND_ORIGIN}/login?error=userinfo_failed`);
       }
       const profile = (await userinfoRes.json()) as {
         email?: string;
@@ -127,7 +92,7 @@ export function createAuthRouter() {
       };
       const email = profile.email?.trim().toLowerCase();
       if (!email) {
-        return res.redirect(`${redirectFrontendOrigin}/login?error=no_email`);
+        return res.redirect(`${FRONTEND_ORIGIN}/login?error=no_email`);
       }
       const name =
         (profile.name ?? [profile.given_name, profile.family_name].filter(Boolean).join(" ")) || email;
@@ -145,11 +110,11 @@ export function createAuthRouter() {
         maxAge: SESSION_MAX_AGE_MS,
         path: "/",
       });
-      const redirectUrl = new URL("/choose-view", redirectFrontendOrigin);
+      const redirectUrl = new URL("/choose-view", FRONTEND_ORIGIN);
       res.redirect(redirectUrl.toString());
     } catch (err) {
       console.error("Google OAuth token exchange error:", err);
-      res.redirect(`${redirectFrontendOrigin}/login?error=server_error`);
+      res.redirect(`${FRONTEND_ORIGIN}/login?error=server_error`);
     }
   });
 

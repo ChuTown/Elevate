@@ -6,8 +6,6 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const PORT = process.env.PORT || 5001;
-const asBoolean = (value: string | undefined) =>
-  typeof value === "string" && ["1", "true", "yes", "on"].includes(value.toLowerCase());
 
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
@@ -20,5 +18,4 @@ export const config = {
   SESSION_COOKIE_NAME: "sid",
   SESSION_MAX_AGE_MS,
   NODE_ENV: process.env.NODE_ENV ?? "development",
-  ALLOW_DYNAMIC_FRONTEND_ORIGIN: asBoolean(process.env.ALLOW_DYNAMIC_FRONTEND_ORIGIN),
 } as const;

@@ -4,12 +4,8 @@ import { apiBaseUrl } from '../config'
 export default function LoginPage() {
   const [searchParams] = useSearchParams()
   const error = searchParams.get('error')
-  const networkConnectEnabled = import.meta.env.VITE_NETWORK_CONNECT === 'true'
-  const frontendOrigin = window.location.origin
 
-  const googleAuthUrl = networkConnectEnabled
-    ? `${apiBaseUrl}/api/auth/google?frontend_origin=${encodeURIComponent(frontendOrigin)}`
-    : `${apiBaseUrl}/api/auth/google`
+  const googleAuthUrl = `${apiBaseUrl}/api/auth/google`
 
   return (
     <main>
