@@ -5,6 +5,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import multer from "multer";
 import { User } from "./models/User.js";
+import { Conversation } from "./models/Conversation.js";
 import cloudinary from "./config/cloudinary.js";
 import { config } from "./config.js";
 import { createAuthRouter } from "./routes/auth.js";
@@ -69,6 +70,30 @@ async function fetchFeaturedUsers() {
 
 function writeFeaturedEvent(res: Response, payload: unknown) {
   res.write(`data: ${JSON.stringify(payload)}\\n\\n`);
+}
+
+function normalizeGuestName(value: unknown) {
+  const normalized = typeof value === "string" ? value.trim() : "";
+  return normalized || "Guest";
+}
+
+function normalizeMessageText(value: unknown) {
+  const normalized = typeof value === "string" ? value.trim() : "";
+  if (!normalized) {
+    return null;
+  }
+  return normalized.slice(0, 2000);
+}
+
+function canAccessConversation(
+  req: RequestWithSession,
+  conversation: { professionalId: mongoose.Types.ObjectId | string; guestId: string }
+) {
+  if (req.user) {
+    return String(conversation.professionalId) === String(req.user._id);
+  }
+  const guestId = typeof req.query.guestId === "string" ? req.query.guestId.trim() : "";
+  return Boolean(guestId && guestId === conversation.guestId);
 }
 
 app.use(
@@ -182,6 +207,168 @@ app.get("/api/users/:id", async (req, res) => {
       return res.status(404).json({ error: "User profile not found" });
     }
     res.status(500).json({ error: "Failed to fetch user profile" });
+  }
+});
+
+app.post("/api/chat/conversations", async (req: RequestWithSession, res) => {
+  try {
+    const professionalIdRaw =
+      typeof req.body?.professionalId === "string" ? req.body.professionalId.trim() : "";
+    if (!mongoose.Types.ObjectId.isValid(professionalIdRaw)) {
+      return res.status(400).json({ error: "Invalid professionalId" });
+    }
+
+    const professional = await User.findById(professionalIdRaw).select("name profile");
+    if (!professional || !professional.profile) {
+      return res.status(404).json({ error: "Professional not found" });
+    }
+
+    const guestId = typeof req.body?.guestId === "string" ? req.body.guestId.trim() : "";
+    if (!guestId) {
+      return res.status(400).json({ error: "guestId is required" });
+    }
+    const guestName = normalizeGuestName(req.body?.guestName);
+
+    const conversation = await Conversation.findOneAndUpdate(
+      { professionalId: professional._id, guestId },
+      {
+        $set: {
+          professionalId: professional._id,
+          guestId,
+          guestName,
+          lastMessageAt: new Date(),
+        },
+      },
+      { upsert: true, returnDocument: "after", setDefaultsOnInsert: true }
+    );
+
+    res.status(201).json({
+      conversation,
+      professional: {
+        _id: professional._id,
+        name: professional.name,
+        profile: professional.profile,
+      },
+    });
+  } catch {
+    res.status(500).json({ error: "Failed to create conversation" });
+  }
+});
+
+app.get(
+  "/api/chat/professional/conversations",
+  requireAuth,
+  async (req: RequestWithSession, res) => {
+    try {
+      const conversations = await Conversation.find({ professionalId: req.user!._id })
+        .sort({ lastMessageAt: -1 })
+        .limit(100)
+        .lean();
+
+      const serialized = conversations.map((conversation) => {
+        const lastMessage = conversation.messages[conversation.messages.length - 1] ?? null;
+        return {
+          _id: conversation._id,
+          guestId: conversation.guestId,
+          guestName: conversation.guestName,
+          professionalId: conversation.professionalId,
+          lastMessageAt: conversation.lastMessageAt,
+          lastMessage,
+          messagesCount: conversation.messages.length,
+        };
+      });
+
+      res.json(serialized);
+    } catch {
+      res.status(500).json({ error: "Failed to fetch conversations" });
+    }
+  }
+);
+
+app.get("/api/chat/conversations/:conversationId", async (req: RequestWithSession, res) => {
+  try {
+    const conversationParam = req.params.conversationId;
+    const conversationId = typeof conversationParam === "string" ? conversationParam : "";
+    if (!mongoose.Types.ObjectId.isValid(conversationId)) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+
+    const conversation = await Conversation.findById(conversationId).lean();
+    if (!conversation) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+    if (!canAccessConversation(req, conversation)) {
+      return res.status(403).json({ error: "Not allowed to access this conversation" });
+    }
+
+    const professional = await User.findById(conversation.professionalId).select("name profile");
+    res.json({
+      ...conversation,
+      professional: professional
+        ? {
+            _id: professional._id,
+            name: professional.name,
+            profile: professional.profile,
+          }
+        : null,
+    });
+  } catch {
+    res.status(500).json({ error: "Failed to fetch conversation" });
+  }
+});
+
+app.post("/api/chat/conversations/:conversationId/messages", async (req: RequestWithSession, res) => {
+  try {
+    const conversationParam = req.params.conversationId;
+    const conversationId = typeof conversationParam === "string" ? conversationParam : "";
+    if (!mongoose.Types.ObjectId.isValid(conversationId)) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+
+    const text = normalizeMessageText(req.body?.text);
+    if (!text) {
+      return res.status(400).json({ error: "Message text is required" });
+    }
+
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+
+    let senderRole: "professional" | "guest";
+    let senderName: string;
+    if (req.user) {
+      if (String(conversation.professionalId) !== String(req.user._id)) {
+        return res.status(403).json({ error: "Not allowed to send to this conversation" });
+      }
+      senderRole = "professional";
+      const firstName = req.user.profile?.firstName ?? "";
+      const lastName = req.user.profile?.lastName ?? "";
+      senderName = `${firstName} ${lastName}`.trim() || req.user.name || "Professional";
+    } else {
+      const guestId = typeof req.body?.guestId === "string" ? req.body.guestId.trim() : "";
+      if (!guestId || guestId !== conversation.guestId) {
+        return res.status(403).json({ error: "Guest is not allowed to send to this conversation" });
+      }
+      senderRole = "guest";
+      senderName = normalizeGuestName(req.body?.guestName || conversation.guestName);
+      conversation.guestName = senderName;
+    }
+
+    const message = {
+      senderRole,
+      senderName,
+      text,
+      createdAt: new Date(),
+    };
+
+    conversation.messages.push(message);
+    conversation.lastMessageAt = message.createdAt;
+    await conversation.save();
+
+    res.status(201).json({ message, conversationId: conversation._id });
+  } catch {
+    res.status(500).json({ error: "Failed to send message" });
   }
 });
 
@@ -388,6 +575,6 @@ mongoose
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error(err));
 
-app.listen(PORT, () => {
+app.listen(Number(PORT), "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });

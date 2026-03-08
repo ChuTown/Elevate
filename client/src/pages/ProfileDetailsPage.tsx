@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import { AVAILABILITY_DAYS, AVAILABILITY_HOURS } from '../components/availability'
 import { useAuth } from '../contexts/AuthContext'
@@ -132,6 +132,9 @@ export default function ProfileDetailsPage() {
           <p className={styles.meta}>
             {Number.isFinite(Number(profile.hourlyRate)) ? `$${Number(profile.hourlyRate)}/hr` : '$0/hr'}
           </p>
+          <Link className={styles.chatLink} to={`/chat/${user._id}`}>
+            Open chat
+          </Link>
         </div>
       </section>
 
