@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { Link, useParams } from 'react-router-dom'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import { AVAILABILITY_DAYS, AVAILABILITY_HOURS } from '../components/availability'
