@@ -1,12 +1,11 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useViewMode } from '../contexts/ViewModeContext'
 import styles from './NavBar.module.css'
 
 export default function NavBar() {
-  const navigate = useNavigate()
   const { user, loading, logout } = useAuth()
-  const { viewMode, setViewMode } = useViewMode()
+  const { viewMode } = useViewMode()
   const rawProfilePhotoUrl =
     viewMode === 'professional'
       ? user?.profile?.profilePhotoUrl
@@ -14,11 +13,6 @@ export default function NavBar() {
   const profilePhotoUrl =
     typeof rawProfilePhotoUrl === 'string' && rawProfilePhotoUrl.trim() ? rawProfilePhotoUrl : null
   const avatarLabel = user?.name?.trim()?.[0] || user?.email?.trim()?.[0] || '?'
-
-  function handleViewSwitch(mode: 'client' | 'professional') {
-    setViewMode(mode)
-    navigate(mode === 'professional' ? '/professional' : '/client')
-  }
 
   return (
     <nav className={styles.navbar}>
@@ -30,22 +24,6 @@ export default function NavBar() {
           <span className={styles.userEmail}>...</span>
         ) : user ? (
           <>
-            <div className={styles.viewSwitcher}>
-              <button
-                type="button"
-                className={viewMode === 'client' ? styles.viewActive : styles.viewBtn}
-                onClick={() => handleViewSwitch('client')}
-              >
-                Client
-              </button>
-              <button
-                type="button"
-                className={viewMode === 'professional' ? styles.viewActive : styles.viewBtn}
-                onClick={() => handleViewSwitch('professional')}
-              >
-                Professional
-              </button>
-            </div>
             <div className={styles.avatarMenuWrap}>
               <details className={styles.avatarMenu}>
                 <summary className={styles.avatarSummary} title="Profile menu">
