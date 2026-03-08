@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type CSSProperties } from 'react'
 import {
   AVAILABILITY_DAYS,
   AVAILABILITY_HOURS,
@@ -11,6 +11,9 @@ type AvailabilityCalendarProps = {
   value: number[][]
   onChange?: (nextValue: number[][]) => void
   readOnly?: boolean
+  selectable?: boolean
+  selectedCell?: { rowIndex: number; colIndex: number } | null
+  onSelectCell?: (selection: { rowIndex: number; colIndex: number }) => void
 }
 
 function levelClass(level: number) {
@@ -18,10 +21,17 @@ function levelClass(level: number) {
   return styles.level1
 }
 
+function displayTimeLabel(hour: string) {
+  return hour
+}
+
 export default function AvailabilityCalendar({
   value,
   onChange,
   readOnly = false,
+  selectable = false,
+  selectedCell = null,
+  onSelectCell,
 }: AvailabilityCalendarProps) {
   const normalizedValue = useMemo(() => normalizeAvailability(value), [value])
   const [isPainting, setIsPainting] = useState(false)
@@ -35,6 +45,13 @@ export default function AvailabilityCalendar({
   }
 
   function handleMouseDown(rowIndex: number, colIndex: number) {
+    if (selectable) {
+      const current = normalizedValue[rowIndex][colIndex]
+      if (current > 0 && onSelectCell) {
+        onSelectCell({ rowIndex, colIndex })
+      }
+      return
+    }
     if (readOnly) return
     const current = normalizedValue[rowIndex][colIndex]
     const nextLevel = current >= AVAILABILITY_MAX_LEVEL ? 0 : AVAILABILITY_MAX_LEVEL
@@ -63,8 +80,18 @@ export default function AvailabilityCalendar({
         </div>
         <span>Available</span>
       </div>
-      {!readOnly && <p className={styles.hint}>Click to toggle a slot. Drag to paint multiple slots.</p>}
-      <div className={styles.calendar} role="grid" aria-label="Weekly availability calendar">
+      {!readOnly && !selectable && (
+        <p className={styles.hint}>Click to toggle a slot. Drag to paint multiple slots.</p>
+      )}
+      {selectable && (
+        <p className={styles.hint}>Click an available slot to select it for a scheduling request.</p>
+      )}
+      <div
+        className={styles.calendar}
+        style={{ '--availability-day-count': String(AVAILABILITY_DAYS.length) } as CSSProperties}
+        role="grid"
+        aria-label="Weekly availability calendar"
+      >
         <div className={styles.corner} />
         {AVAILABILITY_DAYS.map((day) => (
           <div key={day} className={styles.headerCell} role="columnheader">
@@ -79,7 +106,7 @@ export default function AvailabilityCalendar({
               }`}
               role="rowheader"
             >
-              {hour}
+              {displayTimeLabel(hour)}
             </div>
             {AVAILABILITY_DAYS.map((day, colIndex) => {
               const cellLevel = normalizedValue[rowIndex][colIndex]
@@ -90,13 +117,17 @@ export default function AvailabilityCalendar({
                   role="gridcell"
                   className={`${styles.slot} ${levelClass(cellLevel)} ${
                     colIndex === AVAILABILITY_DAYS.length - 1 ? styles.lastColumn : ''
-                  } ${rowIndex === AVAILABILITY_HOURS.length - 1 ? styles.lastRow : ''}`}
+                  } ${rowIndex === AVAILABILITY_HOURS.length - 1 ? styles.lastRow : ''} ${
+                    selectedCell?.rowIndex === rowIndex && selectedCell?.colIndex === colIndex
+                      ? styles.selectedSlot
+                      : ''
+                  }`}
                   aria-label={`${day} ${hour} ${cellLevel ? 'available' : 'not available'}`}
                   onMouseDown={() => handleMouseDown(rowIndex, colIndex)}
                   onMouseEnter={() => handleMouseEnter(rowIndex, colIndex)}
                   onMouseUp={stopPainting}
                   onDragStart={(event) => event.preventDefault()}
-                  disabled={readOnly}
+                  disabled={readOnly || (selectable && cellLevel === 0)}
                 />
               )
             })}

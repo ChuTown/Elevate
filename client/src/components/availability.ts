@@ -1,15 +1,20 @@
-export const AVAILABILITY_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'] as const
-export const AVAILABILITY_HOURS = [
-  '9:00 AM',
-  '10:00 AM',
-  '11:00 AM',
-  '12:00 PM',
-  '1:00 PM',
-  '2:00 PM',
-  '3:00 PM',
-  '4:00 PM',
-  '5:00 PM',
-] as const
+export const AVAILABILITY_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const
+const START_MINUTES = 8 * 60
+const END_MINUTES = 22 * 60
+const STEP_MINUTES = 60
+
+function formatMinutesLabel(totalMinutes: number) {
+  const hours24 = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+  const suffix = hours24 >= 12 ? 'PM' : 'AM'
+  const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12
+  return `${hours12}:${String(minutes).padStart(2, '0')} ${suffix}`
+}
+
+export const AVAILABILITY_HOURS = Array.from(
+  { length: (END_MINUTES - START_MINUTES) / STEP_MINUTES },
+  (_, index) => formatMinutesLabel(START_MINUTES + index * STEP_MINUTES),
+) as readonly string[]
 
 export const AVAILABILITY_MAX_LEVEL = 1
 

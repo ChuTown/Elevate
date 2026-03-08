@@ -34,7 +34,7 @@ const upload = multer({
 });
 
 function normalizeAvailability(value: unknown) {
-  const empty = Array.from({ length: 9 }, () => Array.from({ length: 5 }, () => 0));
+  const empty = Array.from({ length: 14 }, () => Array.from({ length: 7 }, () => 0));
   if (!Array.isArray(value)) {
     return empty;
   }
@@ -258,6 +258,7 @@ app.post("/api/users/profile", requireAuth, async (req: RequestWithSession, res)
       profilePhotoUrl,
       profilePhotoPublicId,
       professionalTitle,
+      hourlyRate,
       yearsOfExperience,
       primaryIndustry,
       location,
@@ -295,6 +296,9 @@ app.post("/api/users/profile", requireAuth, async (req: RequestWithSession, res)
           profilePhotoPublicId:
             typeof profilePhotoPublicId === "string" ? profilePhotoPublicId.trim() : "",
           professionalTitle: String(professionalTitle).trim(),
+          hourlyRate: Number.isFinite(Number(hourlyRate))
+            ? Math.max(0, Number(hourlyRate))
+            : 0,
           yearsOfExperience: Number.isFinite(Number(yearsOfExperience))
             ? Number(yearsOfExperience)
             : 0,
@@ -319,6 +323,63 @@ app.post("/api/users/profile", requireAuth, async (req: RequestWithSession, res)
       return res.status(409).json({ error: "Email already in use" });
     }
     res.status(500).json({ error: "Failed to create profile" });
+  }
+});
+
+app.post("/api/users/:id/schedule-request", requireAuth, async (req: RequestWithSession, res) => {
+  try {
+    const { dayIndex, slotIndex } = req.body;
+    const normalizedDayIndex = Number(dayIndex);
+    const normalizedSlotIndex = Number(slotIndex);
+
+    if (
+      !Number.isInteger(normalizedDayIndex) ||
+      normalizedDayIndex < 0 ||
+      normalizedDayIndex > 6 ||
+      !Number.isInteger(normalizedSlotIndex) ||
+      normalizedSlotIndex < 0 ||
+      normalizedSlotIndex > 13
+    ) {
+      return res.status(400).json({ error: "Invalid day or time slot index" });
+    }
+
+    const targetUser = await User.findById(req.params.id).select("profile scheduleRequests");
+    if (!targetUser || !targetUser.profile) {
+      return res.status(404).json({ error: "Professional profile not found" });
+    }
+
+    const availability = normalizeAvailability(targetUser.profile.availability);
+    const isAvailable = availability[normalizedSlotIndex]?.[normalizedDayIndex] === 1;
+    if (!isAvailable) {
+      return res.status(400).json({ error: "That time slot is not available" });
+    }
+
+    const hasDuplicatePending = targetUser.scheduleRequests.some(
+      (request) =>
+        String(request.requesterId) === String(req.user!._id) &&
+        request.dayIndex === normalizedDayIndex &&
+        request.slotIndex === normalizedSlotIndex &&
+        request.status === "pending"
+    );
+    if (hasDuplicatePending) {
+      return res.status(409).json({ error: "You already requested this time slot" });
+    }
+
+    targetUser.scheduleRequests.push({
+      requesterId: req.user!._id,
+      requesterEmail: String(req.user!.email),
+      dayIndex: normalizedDayIndex,
+      slotIndex: normalizedSlotIndex,
+      status: "pending",
+    });
+
+    await targetUser.save();
+    res.status(201).json({ message: "Schedule request submitted" });
+  } catch (err) {
+    if (err instanceof mongoose.Error.CastError) {
+      return res.status(404).json({ error: "Professional profile not found" });
+    }
+    res.status(500).json({ error: "Failed to submit schedule request" });
   }
 });
 

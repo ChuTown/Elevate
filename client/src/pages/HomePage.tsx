@@ -12,6 +12,7 @@ type FeaturedProfessional = {
     profilePhotoUrl: string
     profilePhotoPublicId: string
     professionalTitle: string
+    hourlyRate?: number
     yearsOfExperience: number
     primaryIndustry: string
     location: string

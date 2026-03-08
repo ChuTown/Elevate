@@ -6,6 +6,7 @@ type ProfessionalProfile = {
   lastName: string
   profilePhotoUrl: string
   professionalTitle: string
+  hourlyRate?: number
   yearsOfExperience: number
   primaryIndustry: string
   location: string
@@ -30,6 +31,10 @@ export default function ProfessionalCard({ userId, name, profile }: Professional
   const company = profile.currentCompany ? ` at ${profile.currentCompany}` : ''
   const industry = profile.primaryIndustry || 'General'
   const summary = profile.summary ? truncate(profile.summary, 110) : 'No summary added yet.'
+  const hourlyRateLabel =
+    Number.isFinite(Number(profile.hourlyRate)) && Number(profile.hourlyRate) > 0
+      ? `$${Number(profile.hourlyRate)}/hr`
+      : 'Rate on request'
   const avatarUrl =
     profile.profilePhotoUrl ||
     'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/User-avatar.svg/1280px-User-avatar.svg.png'
@@ -41,6 +46,7 @@ export default function ProfessionalCard({ userId, name, profile }: Professional
         <h3 className={styles.name}>{name}</h3>
         <p className={styles.title}>{title}{company}</p>
         <p className={styles.meta}>{profile.yearsOfExperience}+ yrs • {industry}</p>
+        <p className={styles.meta}>{hourlyRateLabel}</p>
         {profile.location && <p className={styles.meta}>{profile.location}</p>}
         <p className={styles.summary}>{summary}</p>
       </article>

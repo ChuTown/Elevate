@@ -9,6 +9,7 @@ type ProfileFormState = {
   profilePhotoUrl: string
   profilePhotoPublicId: string
   professionalTitle: string
+  hourlyRate: number
   yearsOfExperience: number
   primaryIndustry: string
   location: string
@@ -25,6 +26,7 @@ export default function ProfileBuilder() {
     profilePhotoUrl: '',
     profilePhotoPublicId: '',
     professionalTitle: '',
+    hourlyRate: 0,
     yearsOfExperience: 0,
     primaryIndustry: '',
     location: '',
@@ -57,6 +59,9 @@ export default function ProfileBuilder() {
             profilePhotoUrl: String(data.profile?.profilePhotoUrl || ''),
             profilePhotoPublicId: String(data.profile?.profilePhotoPublicId || ''),
             professionalTitle: String(data.profile?.professionalTitle || ''),
+            hourlyRate: Number.isFinite(Number(data.profile?.hourlyRate))
+              ? Number(data.profile?.hourlyRate)
+              : 0,
             yearsOfExperience: Number.isFinite(Number(data.profile?.yearsOfExperience))
               ? Number(data.profile?.yearsOfExperience)
               : 0,
@@ -208,6 +213,16 @@ export default function ProfileBuilder() {
           onChange={(event) => updateField('professionalTitle', event.target.value)}
           placeholder="Senior Product Designer"
           required
+        />
+
+        <label htmlFor="hourlyRate">Price per hour (USD)</label>
+        <input
+          id="hourlyRate"
+          type="number"
+          min={0}
+          step={1}
+          value={form.hourlyRate}
+          onChange={(event) => updateField('hourlyRate', Number(event.target.value))}
         />
 
         <label htmlFor="profilePhoto">Profile photo</label>
