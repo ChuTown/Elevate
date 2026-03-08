@@ -6,6 +6,7 @@ import AvailabilityPage from '../pages/AvailabilityPage'
 import LoginPage from '../pages/LoginPage'
 import ProfileDetailsPage from '../pages/ProfileDetailsPage'
 import ChatPage from '../pages/ChatPage'
+import AllProfessionalsPage from '../pages/AllProfessionalsPage'
 import ProtectedRoute from '../components/ProtectedRoute'
 import GuestOnlyRoute from '../components/GuestOnlyRoute'
 
@@ -13,6 +14,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route path="/professionals" element={<AllProfessionalsPage />} />
       <Route path="/profiles/:userId" element={<ProfileDetailsPage />} />
       <Route path="/chat/:professionalId" element={<ChatPage />} />
       <Route

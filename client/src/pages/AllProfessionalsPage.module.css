@@ -1,0 +1,76 @@
+.page {
+  padding: var(--spacing-xl);
+}
+
+.searchRow {
+  margin-top: 1rem;
+}
+
+.layout {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 1rem;
+  align-items: start;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.filterPanel {
+  border: 1px solid var(--color-border, #d9dde3);
+  border-radius: 10px;
+  padding: 0.85rem;
+  background: #fff;
+  position: sticky;
+  top: 1rem;
+}
+
+.filterGroup {
+  margin-bottom: 0.9rem;
+}
+
+.filterGroup h3 {
+  margin: 0 0 0.4rem;
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pill,
+.pillActive {
+  border: 1px solid var(--color-border, #d9dde3);
+  border-radius: 999px;
+  background: #fff;
+  color: inherit;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.pillActive {
+  background: #e8f0ff;
+  border-color: #93b4f3;
+  font-weight: 600;
+}
+
+.clearButton {
+  width: 100%;
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filterPanel {
+    position: static;
+  }
+}

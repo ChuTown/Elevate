@@ -99,6 +99,9 @@ export default function HomePage() {
       <p>
         <Link to="/availability">Set your availability and list yourself on homepage</Link>
       </p>
+      <p>
+        <Link to="/professionals">All professionals</Link>
+      </p>
       <section className={styles.featuredSection}>
         <h2>Featured Professionals</h2>
         {loading && <p>Loading featured professionals...</p>}

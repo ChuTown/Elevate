@@ -197,7 +197,7 @@ export default function ProfileDetailsPage() {
               : 'No ratings yet'}
           </p>
           <Link className={styles.chatLink} to={`/chat/${user._id}`}>
-            Open chat
+            Contact
           </Link>
         </div>
       </section>
