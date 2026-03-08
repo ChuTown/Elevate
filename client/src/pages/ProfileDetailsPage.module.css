@@ -33,6 +33,11 @@
   color: #475569;
 }
 
+.chatLink {
+  margin-top: 0.75rem;
+  display: inline-block;
+}
+
 .grid {
   display: grid;
   gap: 1rem;

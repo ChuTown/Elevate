@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import styles from './ProfileDetailsPage.module.css'
 
@@ -92,6 +92,9 @@ export default function ProfileDetailsPage() {
             {profile.yearsOfExperience}+ years experience
             {profile.location ? ` • ${profile.location}` : ''}
           </p>
+          <Link className={styles.chatLink} to={`/chat/${user._id}`}>
+            Open chat
+          </Link>
         </div>
       </section>
 
