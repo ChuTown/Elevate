@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -35,6 +35,50 @@ export default function ProfileBuilder() {
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
+  const [isEditMode, setIsEditMode] = useState(false)
+
+  useEffect(() => {
+    async function loadExistingProfile() {
+      try {
+        const response = await fetch('/api/users/me/profile')
+        if (!response.ok) {
+          throw new Error('Failed to fetch profile')
+        }
+        const data = (await response.json()) as {
+          profile?: Partial<ProfileFormState>
+        }
+
+        if (data.profile) {
+          setForm((prev) => ({
+            ...prev,
+            firstName: String(data.profile?.firstName || ''),
+            lastName: String(data.profile?.lastName || ''),
+            profilePhotoUrl: String(data.profile?.profilePhotoUrl || ''),
+            profilePhotoPublicId: String(data.profile?.profilePhotoPublicId || ''),
+            professionalTitle: String(data.profile?.professionalTitle || ''),
+            yearsOfExperience: Number.isFinite(Number(data.profile?.yearsOfExperience))
+              ? Number(data.profile?.yearsOfExperience)
+              : 0,
+            primaryIndustry: String(data.profile?.primaryIndustry || ''),
+            location: String(data.profile?.location || ''),
+            summary: String(data.profile?.summary || ''),
+            currentRole: String(data.profile?.currentRole || ''),
+            currentCompany: String(data.profile?.currentCompany || ''),
+          }))
+          setIsEditMode(true)
+        } else {
+          setIsEditMode(false)
+        }
+      } catch {
+        setMessage('Could not load existing profile data.')
+      } finally {
+        setIsLoadingProfile(false)
+      }
+    }
+
+    loadExistingProfile()
+  }, [])
 
   function updateField<K extends keyof ProfileFormState>(key: K, value: ProfileFormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }))
@@ -108,20 +152,13 @@ export default function ProfileBuilder() {
         return
       }
 
-      setMessage('Profile saved to backend.')
-      setForm({
-        firstName: '',
-        lastName: '',
-        profilePhotoUrl: '',
-        profilePhotoPublicId: '',
-        professionalTitle: '',
-        yearsOfExperience: 0,
-        primaryIndustry: '',
-        location: '',
-        summary: '',
-        currentRole: '',
-        currentCompany: '',
-      })
+      setMessage(isEditMode ? 'Profile updated.' : 'Profile created.')
+      setIsEditMode(true)
+      setForm((prev) => ({
+        ...prev,
+        profilePhotoUrl: uploadedPhotoUrl,
+        profilePhotoPublicId: uploadedPhotoPublicId,
+      }))
       setSelectedPhoto(null)
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
@@ -136,9 +173,14 @@ export default function ProfileBuilder() {
 
   return (
     <main className="profile-builder">
-      <h1>Create Your Professional Profile</h1>
-      <p>Build your profile for the currently logged-in account.</p>
+      <h1>{isEditMode ? 'Edit Your Professional Profile' : 'Create Your Professional Profile'}</h1>
+      <p>
+        {isEditMode
+          ? 'Your previous responses are loaded below. Update and save anytime.'
+          : 'Build your profile for the currently logged-in account.'}
+      </p>
       {user && <p>Signed in as: {user.email}</p>}
+      {isLoadingProfile && <p>Loading existing profile...</p>}
 
       <form onSubmit={handleSubmit}>
         <label htmlFor="firstName">First name</label>
@@ -228,7 +270,7 @@ export default function ProfileBuilder() {
         />
 
         <button type="submit" disabled={isSaving}>
-          {isSaving ? 'Saving...' : 'Save Profile'}
+          {isSaving ? 'Saving...' : isEditMode ? 'Update Profile' : 'Save Profile'}
         </button>
       </form>
 
