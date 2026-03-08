@@ -1,5 +1,4 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { api } from '../api/client'
 import styles from './ClientProfilePage.module.css'
@@ -245,9 +244,6 @@ export default function ClientProfilePage() {
       </section>
 
       {message && <p className={styles.message} role="alert">{message}</p>}
-      <p>
-        <Link to="/professional">Go to professional dashboard</Link>
-      </p>
     </main>
   )
 }
