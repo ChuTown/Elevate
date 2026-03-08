@@ -133,7 +133,22 @@
   padding: 0.45rem;
 }
 
+.menuButton {
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  border-radius: 8px;
+  padding: 0.45rem;
+  font: inherit;
+  cursor: pointer;
+}
+
 .menuLink:hover {
+  background: var(--color-bg-hover, rgba(0, 0, 0, 0.05));
+}
+
+.menuButton:hover {
   background: var(--color-bg-hover, rgba(0, 0, 0, 0.05));
 }
 
