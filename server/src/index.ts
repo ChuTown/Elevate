@@ -34,6 +34,19 @@ const upload = multer({
   },
 });
 
+const uploadResume = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = new Set(["application/pdf"]);
+    if (!allowedTypes.has(file.mimetype)) {
+      cb(new Error("Only PDF files are allowed for resume"));
+      return;
+    }
+    cb(null, true);
+  },
+});
+
 function normalizeAvailability(value: unknown) {
   const empty = Array.from({ length: 14 }, () => Array.from({ length: 7 }, () => 0));
   if (!Array.isArray(value)) {
@@ -209,6 +222,213 @@ app.get("/api/users/me/profile", requireAuth, async (req: RequestWithSession, re
   }
 });
 
+app.get("/api/users/me/client-profile", requireAuth, async (req: RequestWithSession, res) => {
+  try {
+    const user = await User.findById(req.user!._id).select("clientProfile").lean();
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json({ clientProfile: user.clientProfile ?? {} });
+  } catch {
+    res.status(500).json({ error: "Failed to fetch client profile" });
+  }
+});
+
+app.put("/api/users/me/client-profile", requireAuth, async (req: RequestWithSession, res) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      description,
+      profilePhotoUrl,
+      profilePhotoPublicId,
+      resumeUrl,
+      resumePublicId,
+    } = req.body;
+    const user = await User.findById(req.user!._id).select("clientProfile");
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    if (!user.clientProfile) {
+      user.clientProfile = {
+        firstName: "",
+        lastName: "",
+        profilePhotoUrl: "",
+        profilePhotoPublicId: "",
+        resumeUrl: "",
+        resumePublicId: "",
+        description: "",
+      };
+    }
+    if (typeof firstName === "string") {
+      user.clientProfile.firstName = firstName.trim().slice(0, 80);
+    }
+    if (typeof lastName === "string") {
+      user.clientProfile.lastName = lastName.trim().slice(0, 80);
+    }
+    if (typeof description === "string") {
+      user.clientProfile.description = description.trim().slice(0, 2000);
+    }
+    if (typeof profilePhotoUrl === "string" && profilePhotoUrl.trim()) {
+      user.clientProfile.profilePhotoUrl = profilePhotoUrl.trim();
+    }
+    if (typeof profilePhotoPublicId === "string") {
+      user.clientProfile.profilePhotoPublicId = profilePhotoPublicId.trim();
+    }
+    if (typeof resumeUrl === "string" && resumeUrl.trim()) {
+      user.clientProfile.resumeUrl = resumeUrl.trim();
+    }
+    if (typeof resumePublicId === "string") {
+      user.clientProfile.resumePublicId = resumePublicId.trim();
+    }
+    await user.save();
+    res.json({ clientProfile: user.clientProfile });
+  } catch {
+    res.status(500).json({ error: "Failed to update client profile" });
+  }
+});
+
+app.post(
+  "/api/users/me/client-profile/photo",
+  requireAuth,
+  upload.single("photo"),
+  async (req: RequestWithSession, res) => {
+    try {
+      if (!CLOUDINARY_CONFIGURED) {
+        return res.status(500).json({ error: "Cloudinary is not configured on the server" });
+      }
+      if (!req.file) {
+        return res.status(400).json({ error: "Profile photo is required" });
+      }
+      const file = req.file;
+      const uploadResult = await new Promise<{ secure_url: string; public_id: string }>(
+        (resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            {
+              folder: "elevate/client-profile-pictures",
+              resource_type: "image",
+              transformation: [{ width: 300, height: 300, crop: "fill", gravity: "face" }],
+            },
+            (error, result) => {
+              if (error || !result) {
+                reject(error || new Error("Failed to upload image"));
+                return;
+              }
+              resolve({ secure_url: result.secure_url, public_id: result.public_id });
+            }
+          );
+          uploadStream.end(file.buffer);
+        }
+      );
+      const user = await User.findById(req.user!._id).select("clientProfile");
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      if (!user.clientProfile) {
+        user.clientProfile = {
+          firstName: "",
+          lastName: "",
+          profilePhotoUrl: "",
+          profilePhotoPublicId: "",
+          resumeUrl: "",
+          resumePublicId: "",
+          description: "",
+        };
+      }
+      if (user.clientProfile.profilePhotoPublicId) {
+        try {
+          await cloudinary.uploader.destroy(user.clientProfile.profilePhotoPublicId);
+        } catch {
+          // ignore destroy errors
+        }
+      }
+      user.clientProfile.profilePhotoUrl = uploadResult.secure_url;
+      user.clientProfile.profilePhotoPublicId = uploadResult.public_id;
+      await user.save();
+      res.status(201).json({
+        profilePhotoUrl: uploadResult.secure_url,
+        profilePhotoPublicId: uploadResult.public_id,
+      });
+    } catch (err) {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: err.message });
+      }
+      res.status(500).json({ error: "Failed to upload client profile photo" });
+    }
+  }
+);
+
+app.post(
+  "/api/users/me/client-profile/resume",
+  requireAuth,
+  uploadResume.single("resume"),
+  async (req: RequestWithSession, res) => {
+    try {
+      if (!CLOUDINARY_CONFIGURED) {
+        return res.status(500).json({ error: "Cloudinary is not configured on the server" });
+      }
+      if (!req.file) {
+        return res.status(400).json({ error: "Resume file is required (PDF)" });
+      }
+      const file = req.file;
+      const uploadResult = await new Promise<{ secure_url: string; public_id: string }>(
+        (resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            {
+              folder: "elevate/client-resumes",
+              resource_type: "raw",
+            },
+            (error, result) => {
+              if (error || !result) {
+                reject(error || new Error("Failed to upload resume"));
+                return;
+              }
+              resolve({ secure_url: result.secure_url, public_id: result.public_id });
+            }
+          );
+          uploadStream.end(file.buffer);
+        }
+      );
+      const user = await User.findById(req.user!._id).select("clientProfile");
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      if (!user.clientProfile) {
+        user.clientProfile = {
+          firstName: "",
+          lastName: "",
+          profilePhotoUrl: "",
+          profilePhotoPublicId: "",
+          resumeUrl: "",
+          resumePublicId: "",
+          description: "",
+        };
+      }
+      if (user.clientProfile.resumePublicId) {
+        try {
+          await cloudinary.uploader.destroy(user.clientProfile.resumePublicId, {
+            resource_type: "raw",
+          });
+        } catch {
+          // ignore
+        }
+      }
+      user.clientProfile.resumeUrl = uploadResult.secure_url;
+      user.clientProfile.resumePublicId = uploadResult.public_id;
+      await user.save();
+      res.status(201).json({
+        resumeUrl: uploadResult.secure_url,
+        resumePublicId: uploadResult.public_id,
+      });
+    } catch (err) {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: err.message });
+      }
+      res.status(500).json({ error: "Failed to upload resume" });
+    }
+  }
+);
+
 app.post("/api/users/me/availability", requireAuth, async (req: RequestWithSession, res) => {
   try {
     const { availability, isListed } = req.body;
@@ -230,6 +450,43 @@ app.post("/api/users/me/availability", requireAuth, async (req: RequestWithSessi
       return res.status(400).json({ error: err.message });
     }
     res.status(500).json({ error: "Failed to save availability" });
+  }
+});
+
+app.get("/api/users/me/schedule-requests", requireAuth, async (req: RequestWithSession, res) => {
+  try {
+    const user = await User.findById(req.user!._id)
+      .select("scheduleRequests")
+      .lean();
+    if (!user || !user.scheduleRequests || user.scheduleRequests.length === 0) {
+      return res.json({ scheduleRequests: [] });
+    }
+    const requesters = await User.find({
+      _id: { $in: user.scheduleRequests.map((r) => r.requesterId) },
+    })
+      .select("name email clientProfile")
+      .lean();
+    const requesterMap = new Map(
+      requesters.map((r) => [String(r._id), { _id: r._id, name: r.name, email: r.email, clientProfile: r.clientProfile ?? {} }])
+    );
+    const scheduleRequests = user.scheduleRequests.map((r) => ({
+      _id: r._id,
+      requesterId: r.requesterId,
+      requesterEmail: r.requesterEmail,
+      dayIndex: r.dayIndex,
+      slotIndex: r.slotIndex,
+      status: r.status,
+      createdAt: r.createdAt,
+      requester: requesterMap.get(String(r.requesterId)) ?? {
+        _id: r.requesterId,
+        name: "",
+        email: r.requesterEmail,
+        clientProfile: {},
+      },
+    }));
+    res.json({ scheduleRequests });
+  } catch {
+    res.status(500).json({ error: "Failed to fetch schedule requests" });
   }
 });
 

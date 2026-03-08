@@ -110,7 +110,7 @@ export function createAuthRouter() {
         maxAge: SESSION_MAX_AGE_MS,
         path: "/",
       });
-      const redirectUrl = new URL("/", FRONTEND_ORIGIN);
+      const redirectUrl = new URL("/choose-view", FRONTEND_ORIGIN);
       res.redirect(redirectUrl.toString());
     } catch (err) {
       console.error("Google OAuth token exchange error:", err);
@@ -128,6 +128,7 @@ export function createAuthRouter() {
         email: req.user.email,
         name: req.user.name,
         profile: req.user.profile,
+        clientProfile: req.user.clientProfile,
       },
     });
   });

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import styles from './ProfileBuilder.module.css'
 
 type ProfileFormState = {
   firstName: string
@@ -39,6 +40,12 @@ export default function ProfileBuilder() {
   const [isSaving, setIsSaving] = useState(false)
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [isEditMode, setIsEditMode] = useState(false)
+  const hasPreviewData = Boolean(
+    form.firstName || form.lastName || form.professionalTitle || form.summary || form.profilePhotoUrl
+  )
+  const fullName = `${form.firstName} ${form.lastName}`.trim() || 'Your name'
+  const fallbackAvatar =
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/User-avatar.svg/1280px-User-avatar.svg.png'
 
   useEffect(() => {
     async function loadExistingProfile() {
@@ -177,7 +184,7 @@ export default function ProfileBuilder() {
   }
 
   return (
-    <main className="profile-builder">
+    <main className={styles.page}>
       <h1>{isEditMode ? 'Edit Your Professional Profile' : 'Create Your Professional Profile'}</h1>
       <p>
         {isEditMode
@@ -293,6 +300,33 @@ export default function ProfileBuilder() {
       <p>
         <Link to="/availability">Set availability and listing status</Link>
       </p>
+
+      {hasPreviewData && (
+        <section className={styles.previewCard}>
+          <h2>Current professional profile</h2>
+          <div className={styles.previewHeader}>
+            <img
+              className={styles.previewAvatar}
+              src={form.profilePhotoUrl || fallbackAvatar}
+              alt="Current professional profile"
+            />
+            <div>
+              <p className={styles.previewName}>{fullName}</p>
+              <p className={styles.previewMeta}>
+                {form.professionalTitle || 'No title saved yet'}
+              </p>
+              <p className={styles.previewMeta}>
+                {Number.isFinite(Number(form.hourlyRate)) && Number(form.hourlyRate) > 0
+                  ? `$${Number(form.hourlyRate)}/hr`
+                  : 'Rate on request'}
+              </p>
+            </div>
+          </div>
+          <p className={styles.previewSummary}>
+            {form.summary.trim() || 'No summary saved yet.'}
+          </p>
+        </section>
+      )}
     </main>
   )
 }

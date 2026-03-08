@@ -1,0 +1,41 @@
+.page {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+}
+
+.previewCard {
+  margin-top: var(--spacing-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  padding: var(--spacing-md);
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.previewAvatar {
+  width: 88px;
+  height: 88px;
+  border-radius: 999px;
+  object-fit: cover;
+  border: 1px solid var(--color-border);
+}
+
+.previewName {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.previewMeta {
+  margin: 0.2rem 0;
+  color: var(--color-text-muted);
+}
+
+.previewSummary {
+  margin-top: var(--spacing-sm);
+}

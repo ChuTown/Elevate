@@ -28,6 +28,19 @@ const reviewSchema = new mongoose.Schema(
   { _id: true }
 );
 
+const clientProfileSchema = new mongoose.Schema(
+  {
+    firstName: { type: String, trim: true, default: "" },
+    lastName: { type: String, trim: true, default: "" },
+    profilePhotoUrl: { type: String, trim: true, default: "" },
+    profilePhotoPublicId: { type: String, trim: true, default: "" },
+    resumeUrl: { type: String, trim: true, default: "" },
+    resumePublicId: { type: String, trim: true, default: "" },
+    description: { type: String, trim: true, default: "" },
+  },
+  { _id: false }
+);
+
 const profileSchema = new mongoose.Schema(
   {
     firstName: { type: String, required: true, trim: true },
@@ -74,6 +87,7 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     profile: { type: profileSchema, required: false },
+    clientProfile: { type: clientProfileSchema, required: false },
     scheduleRequests: { type: [scheduleRequestSchema], default: [] },
     reviews: { type: [reviewSchema], default: [] },
   },
