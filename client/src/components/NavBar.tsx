@@ -12,7 +12,6 @@ export default function NavBar() {
       </Link>
       <div className={styles.links}>
         <Link to="/">Home</Link>
-        <Link to="/create-profile">Become an advisor</Link>
       </div>
       <div className={styles.auth}>
         {loading ? (

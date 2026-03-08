@@ -48,19 +48,6 @@
   color: var(--color-primary);
 }
 
-.signup {
-  text-decoration: none;
-  background: var(--color-primary);
-  color: #fff;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-sm);
-  font-weight: var(--font-weight-medium);
-}
-
-.signup:hover {
-  background: var(--color-primary-hover);
-}
-
 .userEmail {
   font-size: var(--font-size-sm);
   color: var(--color-text-muted, #666);
