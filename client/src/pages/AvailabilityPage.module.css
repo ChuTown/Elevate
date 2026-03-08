@@ -1,11 +1,3 @@
 .page {
   padding: var(--spacing-xl);
 }
-
-.listingToggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 1rem 0;
-  font-weight: 600;
-}

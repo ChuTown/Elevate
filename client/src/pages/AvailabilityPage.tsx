@@ -8,13 +8,11 @@ type MeProfileResponse = {
   _id: string
   profile?: {
     availability?: number[][]
-    isListed?: boolean
   }
 }
 
 export default function AvailabilityPage() {
   const [availability, setAvailability] = useState<number[][]>(createEmptyAvailability())
-  const [isListed, setIsListed] = useState(false)
   const [loading, setLoading] = useState(true)
   const [hasProfile, setHasProfile] = useState(true)
   const [message, setMessage] = useState<string | null>(null)
@@ -33,7 +31,6 @@ export default function AvailabilityPage() {
           return
         }
         setAvailability(normalizeAvailability(data.profile.availability))
-        setIsListed(Boolean(data.profile.isListed))
       } catch {
         setMessage('Unable to load your profile right now.')
       } finally {
@@ -51,7 +48,7 @@ export default function AvailabilityPage() {
       const response = await fetch('/api/users/me/availability', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ availability, isListed }),
+        body: JSON.stringify({ availability }),
       })
       const result = (await response.json()) as { error?: string }
       if (!response.ok) {
@@ -89,15 +86,6 @@ export default function AvailabilityPage() {
       <h1>Availability & Listing</h1>
       <p>Only your logged-in account can update these slots and listing status.</p>
       <AvailabilityCalendar value={availability} onChange={setAvailability} />
-
-      <label className={styles.listingToggle}>
-        <input
-          type="checkbox"
-          checked={isListed}
-          onChange={(event) => setIsListed(event.target.checked)}
-        />
-        Show me on the home page featured list
-      </label>
 
       <button type="button" disabled={isSaving} onClick={saveAvailability}>
         {isSaving ? 'Saving...' : 'Save availability'}

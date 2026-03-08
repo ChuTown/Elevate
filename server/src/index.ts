@@ -431,14 +431,14 @@ app.post(
 
 app.post("/api/users/me/availability", requireAuth, async (req: RequestWithSession, res) => {
   try {
-    const { availability, isListed } = req.body;
+    const { availability } = req.body;
     const user = await User.findById(req.user!._id).select("profile");
     if (!user || !user.profile) {
       return res.status(400).json({ error: "Create your profile before setting availability" });
     }
 
     user.set("profile.availability", normalizeAvailability(availability));
-    user.set("profile.isListed", Boolean(isListed));
+    user.set("profile.isListed", true);
     await user.save();
 
     res.status(200).json({
