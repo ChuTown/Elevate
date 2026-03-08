@@ -18,4 +18,12 @@ export interface ApiUser {
     professionalTitle?: string;
     [key: string]: unknown;
   };
+  clientProfile?: {
+    firstName?: string;
+    lastName?: string;
+    profilePhotoUrl?: string;
+    resumeUrl?: string;
+    description?: string;
+    [key: string]: unknown;
+  };
 }

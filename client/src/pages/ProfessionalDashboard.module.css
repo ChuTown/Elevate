@@ -1,0 +1,203 @@
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--spacing-xl);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-lg);
+}
+
+.tabs {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-bottom: var(--spacing-xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab,
+.tabActive {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: inherit;
+  color: var(--color-text-muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tabActive {
+  color: var(--color-primary);
+  font-weight: var(--font-weight-medium);
+  border-bottom-color: var(--color-primary);
+}
+
+.section h2 {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--spacing-sm);
+}
+
+.subtitle {
+  color: var(--color-text-muted);
+  margin-bottom: var(--spacing-md);
+  font-size: 0.9375rem;
+}
+
+.empty {
+  color: var(--color-text-muted);
+  padding: var(--spacing-lg) 0;
+}
+
+.convList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--spacing-md);
+}
+
+.convList li {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.convLink {
+  display: block;
+  padding: var(--spacing-md);
+  text-decoration: none;
+  color: inherit;
+}
+
+.convLink:hover {
+  background: var(--color-bg-hover, rgba(0, 0, 0, 0.04));
+}
+
+.convName {
+  font-weight: var(--font-weight-medium);
+  display: block;
+}
+
+.convPreview {
+  display: block;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.convMeta {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.requestList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.requestItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.slotLabel {
+  font-weight: var(--font-weight-medium);
+}
+
+.requestStatus {
+  text-transform: capitalize;
+  font-size: 0.875rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--color-border);
+}
+
+.requestEmail {
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+}
+
+.requestDate {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin-left: auto;
+}
+
+.clientCards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.clientCard {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-lg);
+  background: var(--color-bg);
+}
+
+.clientHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.clientPhoto {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.clientPhotoPlaceholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--font-weight-bold);
+  font-size: 1.25rem;
+}
+
+.clientEmail {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+}
+
+.clientDescription {
+  margin: var(--spacing-md) 0 0;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+.resumeLink {
+  display: inline-block;
+  margin-top: var(--spacing-sm);
+  color: var(--color-primary);
+  font-size: 0.9375rem;
+}
+
+.resumeLink:hover {
+  text-decoration: underline;
+}

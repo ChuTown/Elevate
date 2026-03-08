@@ -22,6 +22,35 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.viewSwitcher {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.viewBtn,
+.viewActive {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  border: none;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.viewBtn:hover {
+  background: var(--color-bg-hover, rgba(0, 0, 0, 0.05));
+}
+
+.viewActive {
+  background: var(--color-primary);
+  color: #fff;
 }
 
 .avatarLink {
@@ -49,6 +78,63 @@
   font-weight: 700;
   background: #2e9800;
   color: #fff;
+}
+
+.avatarMenuWrap {
+  position: relative;
+}
+
+.avatarMenu {
+  position: relative;
+}
+
+.avatarSummary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.avatarSummary::-webkit-details-marker {
+  display: none;
+}
+
+.avatarDropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.45rem);
+  width: 220px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-bg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  padding: 0.5rem;
+  display: grid;
+  gap: 0.25rem;
+  z-index: 20;
+}
+
+.menuIdentity {
+  margin: 0;
+  padding: 0.35rem 0.45rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-muted, #666);
+  font-size: 0.8rem;
+}
+
+.menuLink {
+  text-decoration: none;
+  color: var(--color-text);
+  border-radius: 8px;
+  padding: 0.45rem;
+}
+
+.menuLink:hover {
+  background: var(--color-bg-hover, rgba(0, 0, 0, 0.05));
 }
 
 .login {

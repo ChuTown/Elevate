@@ -3,13 +3,16 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import './styles/global.css'
 import { AuthProvider } from './contexts/AuthContext'
+import { ViewModeProvider } from './contexts/ViewModeContext'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <ViewModeProvider>
+          <App />
+        </ViewModeProvider>
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>,

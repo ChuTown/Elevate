@@ -4,6 +4,9 @@ import CreateProfile from '../pages/CreateProfile'
 import ProfileBuilder from '../pages/ProfileBuilder'
 import AvailabilityPage from '../pages/AvailabilityPage'
 import LoginPage from '../pages/LoginPage'
+import ChooseViewPage from '../pages/ChooseViewPage'
+import ClientProfilePage from '../pages/ClientProfilePage'
+import ProfessionalDashboard from '../pages/ProfessionalDashboard'
 import ProfileDetailsPage from '../pages/ProfileDetailsPage'
 import ChatPage from '../pages/ChatPage'
 import ProtectedRoute from '../components/ProtectedRoute'
@@ -15,6 +18,30 @@ export function AppRoutes() {
       <Route path="/" element={<HomePage />} />
       <Route path="/profiles/:userId" element={<ProfileDetailsPage />} />
       <Route path="/chat/:professionalId" element={<ChatPage />} />
+      <Route
+        path="/choose-view"
+        element={
+          <ProtectedRoute>
+            <ChooseViewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/client"
+        element={
+          <ProtectedRoute>
+            <ClientProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/professional"
+        element={
+          <ProtectedRoute>
+            <ProfessionalDashboard />
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/create-profile"
         element={
