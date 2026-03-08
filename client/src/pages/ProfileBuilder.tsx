@@ -303,7 +303,7 @@ export default function ProfileBuilder() {
 
       {hasPreviewData && (
         <section className={styles.previewCard}>
-          <h2>Current professional profile</h2>
+          <h2>Preview profile</h2>
           <div className={styles.previewHeader}>
             <img
               className={styles.previewAvatar}
