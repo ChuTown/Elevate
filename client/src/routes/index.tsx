@@ -3,7 +3,6 @@ import HomePage from '../pages/HomePage'
 import CreateProfile from '../pages/CreateProfile'
 import ProfileBuilder from '../pages/ProfileBuilder'
 import LoginPage from '../pages/LoginPage'
-import SignupPage from '../pages/SignupPage'
 import ProtectedRoute from '../components/ProtectedRoute'
 import GuestOnlyRoute from '../components/GuestOnlyRoute'
 
@@ -32,14 +31,6 @@ export function AppRoutes() {
         element={
           <GuestOnlyRoute>
             <LoginPage />
-          </GuestOnlyRoute>
-        }
-      />
-      <Route
-        path="/signup"
-        element={
-          <GuestOnlyRoute>
-            <SignupPage />
           </GuestOnlyRoute>
         }
       />

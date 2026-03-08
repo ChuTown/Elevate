@@ -29,14 +29,9 @@ export default function NavBar() {
             </button>
           </>
         ) : (
-          <>
-            <Link to="/login" className={styles.login}>
-              Log in
-            </Link>
-            <Link to="/signup" className={styles.signup}>
-              Sign up
-            </Link>
-          </>
+          <Link to="/login" className={styles.login}>
+            Log in
+          </Link>
         )}
       </div>
     </nav>
