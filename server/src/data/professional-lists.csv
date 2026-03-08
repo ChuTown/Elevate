@@ -1,0 +1,103 @@
+type,value
+first_name,Alex
+first_name,Jordan
+first_name,Taylor
+first_name,Morgan
+first_name,Cameron
+first_name,Riley
+first_name,Casey
+first_name,Avery
+first_name,Harper
+first_name,Quinn
+first_name,Blake
+first_name,Drew
+first_name,Parker
+first_name,Reese
+first_name,Hayden
+first_name,Skyler
+first_name,Emerson
+first_name,Rowan
+last_name,Nguyen
+last_name,Patel
+last_name,Kim
+last_name,Garcia
+last_name,Johnson
+last_name,Smith
+last_name,Lee
+last_name,Brown
+last_name,Martinez
+last_name,Davis
+last_name,Wilson
+last_name,Moore
+last_name,Anderson
+last_name,Clark
+last_name,Hall
+last_name,Ramirez
+last_name,Bailey
+industry,Software
+industry,FinTech
+industry,HealthTech
+industry,E-commerce
+industry,Cybersecurity
+industry,AI/ML
+industry,Cloud Infrastructure
+industry,Data Analytics
+industry,EdTech
+industry,Consumer Apps
+skill,React
+skill,TypeScript
+skill,Node.js
+skill,Product Strategy
+skill,Growth Marketing
+skill,Python
+skill,SQL
+skill,Machine Learning
+skill,UX Research
+skill,UI Design
+skill,DevOps
+skill,Kubernetes
+skill,AWS
+skill,GCP
+skill,System Design
+skill,Mobile Development
+role,Software Engineer
+role,Product Manager
+role,Data Scientist
+role,UX Designer
+role,DevOps Engineer
+role,Security Engineer
+role,Solutions Architect
+role,Growth Manager
+role,Marketing Strategist
+role,Technical Program Manager
+company,Google
+company,Meta
+company,Amazon
+company,Microsoft
+company,Apple
+company,Netflix
+company,Stripe
+company,Shopify
+company,Datadog
+company,Figma
+company,Notion
+company,Canva
+company,OpenAI
+company,Airbnb
+company,Coinbase
+location,New York NY
+location,San Francisco CA
+location,Seattle WA
+location,Austin TX
+location,Chicago IL
+location,Boston MA
+location,Los Angeles CA
+location,Atlanta GA
+location,Denver CO
+location,Miami FL
+summary_seed,helps teams scale products with clear systems
+summary_seed,focuses on practical outcomes and measurable impact
+summary_seed,specializes in cross-functional execution and communication
+summary_seed,builds reliable foundations for fast-moving teams
+summary_seed,drives user-centered decisions through research and data
+summary_seed,improves delivery quality through strong technical standards

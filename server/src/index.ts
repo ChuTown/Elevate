@@ -58,14 +58,31 @@ function normalizeAvailability(value: unknown) {
 }
 
 async function fetchFeaturedUsers() {
-  const users = await User.find({
+  const users = await fetchProfessionalUsers({ listedOnly: true, limit: 8 });
+
+  return users;
+}
+
+async function fetchProfessionalUsers({
+  listedOnly = false,
+  limit,
+}: {
+  listedOnly?: boolean;
+  limit?: number;
+}) {
+  const query: Record<string, unknown> = {
     profile: { $exists: true, $ne: null },
-    "profile.isListed": true,
-  })
-    .sort({ updatedAt: -1 })
-    .limit(8)
-    .select("name email profile reviews")
-    .lean();
+  };
+  if (listedOnly) {
+    query["profile.isListed"] = true;
+  }
+
+  let mongoQuery = User.find(query).sort({ updatedAt: -1 }).select("name email profile reviews");
+  if (typeof limit === "number") {
+    mongoQuery = mongoQuery.limit(limit);
+  }
+
+  const users = await mongoQuery.lean();
 
   return users.map((user) => {
     const reviews = Array.isArray(user.reviews) ? user.reviews : [];
@@ -133,6 +150,16 @@ app.get("/api/users/featured", async (req, res) => {
     res.json(featuredUsers);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch featured users" });
+  }
+});
+
+app.get("/api/users/professionals", async (req, res) => {
+  try {
+    res.setHeader("Cache-Control", "no-store");
+    const users = await fetchProfessionalUsers({ listedOnly: false });
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch professionals" });
   }
 });
 
