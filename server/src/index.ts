@@ -1,4 +1,5 @@
 import express from "express";
+import type { Response } from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -7,7 +8,7 @@ import { User } from "./models/User.js";
 import cloudinary from "./config/cloudinary.js";
 import { config } from "./config.js";
 import { createAuthRouter } from "./routes/auth.js";
-import { loadSession } from "./middleware/session.js";
+import { loadSession, requireAuth, type RequestWithSession } from "./middleware/session.js";
 
 const { PORT, FRONTEND_ORIGIN } = config;
 const app = express();
@@ -32,6 +33,44 @@ const upload = multer({
   },
 });
 
+function normalizeAvailability(value: unknown) {
+  const empty = Array.from({ length: 9 }, () => Array.from({ length: 5 }, () => 0));
+  if (!Array.isArray(value)) {
+    return empty;
+  }
+
+  return empty.map((row, rowIndex) => {
+    const candidateRow = value[rowIndex];
+    if (!Array.isArray(candidateRow)) {
+      return row;
+    }
+
+    return row.map((_, colIndex) => {
+      const candidate = candidateRow[colIndex];
+      const normalized = typeof candidate === "number" ? candidate : 0;
+      if (!Number.isFinite(normalized)) {
+        return 0;
+      }
+      return normalized > 0 ? 1 : 0;
+    });
+  });
+}
+
+async function fetchFeaturedUsers() {
+  return User.find({
+    profile: { $exists: true, $ne: null },
+    "profile.isListed": true,
+  })
+    .sort({ updatedAt: -1 })
+    .limit(8)
+    .select("name email profile")
+    .lean();
+}
+
+function writeFeaturedEvent(res: Response, payload: unknown) {
+  res.write(`data: ${JSON.stringify(payload)}\\n\\n`);
+}
+
 app.use(
   cors({
     origin: FRONTEND_ORIGIN,
@@ -51,27 +90,83 @@ app.get("/api/hello", (req, res) => {
   res.json({ message: "Hello, World!" });
 });
 
-app.get("/api/users", async (req, res) => {
-  try {
-    const users = await User.find().sort({ createdAt: -1 });
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch users" });
-  }
-});
-
 app.get("/api/users/featured", async (req, res) => {
   try {
-    const featuredUsers = await User.find({
-      profile: { $exists: true, $ne: null },
-    })
-      .sort({ updatedAt: -1 })
-      .limit(8)
-      .select("name email profile");
-
+    res.setHeader("Cache-Control", "no-store");
+    const featuredUsers = await fetchFeaturedUsers();
     res.json(featuredUsers);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch featured users" });
+  }
+});
+
+app.get("/api/users/featured/stream", async (_req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  let previousPayload = "";
+
+  const sendSnapshot = async () => {
+    try {
+      const featuredUsers = await fetchFeaturedUsers();
+      const nextPayload = JSON.stringify(featuredUsers);
+      if (nextPayload !== previousPayload) {
+        previousPayload = nextPayload;
+        writeFeaturedEvent(res, featuredUsers);
+      }
+    } catch {
+      writeFeaturedEvent(res, { error: "Failed to fetch featured users" });
+    }
+  };
+
+  await sendSnapshot();
+
+  const pollInterval = setInterval(sendSnapshot, 5000);
+  const keepAliveInterval = setInterval(() => {
+    res.write(": keepalive\\n\\n");
+  }, 25000);
+
+  res.on("close", () => {
+    clearInterval(pollInterval);
+    clearInterval(keepAliveInterval);
+  });
+});
+
+app.get("/api/users/me/profile", requireAuth, async (req: RequestWithSession, res) => {
+  try {
+    const user = await User.findById(req.user!._id).select("name email profile");
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json(user);
+  } catch {
+    res.status(500).json({ error: "Failed to fetch your profile" });
+  }
+});
+
+app.post("/api/users/me/availability", requireAuth, async (req: RequestWithSession, res) => {
+  try {
+    const { availability, isListed } = req.body;
+    const user = await User.findById(req.user!._id).select("profile");
+    if (!user || !user.profile) {
+      return res.status(400).json({ error: "Create your profile before setting availability" });
+    }
+
+    user.set("profile.availability", normalizeAvailability(availability));
+    user.set("profile.isListed", Boolean(isListed));
+    await user.save();
+
+    res.status(200).json({
+      availability: user.profile.availability,
+      isListed: user.profile.isListed,
+    });
+  } catch (err) {
+    if (err instanceof mongoose.Error.ValidationError) {
+      return res.status(400).json({ error: err.message });
+    }
+    res.status(500).json({ error: "Failed to save availability" });
   }
 });
 
@@ -90,22 +185,24 @@ app.get("/api/users/:id", async (req, res) => {
   }
 });
 
-app.post("/api/users", async (req, res) => {
+app.post("/api/users", requireAuth, async (req: RequestWithSession, res) => {
   try {
-    const { name, email } = req.body;
-    if (!name || !email) {
-      return res.status(400).json({ error: "name and email are required" });
+    const { name } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: "name is required" });
     }
-    const user = await User.create({ name, email });
-    res.status(201).json(user);
+    const normalizedName = String(name).trim();
+    const user = await User.findByIdAndUpdate(
+      req.user!._id,
+      { name: normalizedName },
+      { new: true, runValidators: true }
+    );
+    res.status(200).json(user);
   } catch (err) {
     if (err instanceof mongoose.Error.ValidationError) {
       return res.status(400).json({ error: err.message });
     }
-    if (err instanceof mongoose.mongo.MongoServerError && err.code === 11000) {
-      return res.status(409).json({ error: "Email already in use" });
-    }
-    res.status(500).json({ error: "Failed to create user" });
+    res.status(500).json({ error: "Failed to update user" });
   }
 });
 
@@ -153,10 +250,9 @@ app.post("/api/users/profile/photo", upload.single("photo"), async (req, res) =>
   }
 });
 
-app.post("/api/users/profile", async (req, res) => {
+app.post("/api/users/profile", requireAuth, async (req: RequestWithSession, res) => {
   try {
     const {
-      email,
       firstName,
       lastName,
       profilePhotoUrl,
@@ -170,21 +266,22 @@ app.post("/api/users/profile", async (req, res) => {
       summary,
     } = req.body;
 
-    if (!email || !firstName || !lastName || !professionalTitle) {
-      return res
-        .status(400)
-        .json({
-          error: "email, firstName, lastName, and professionalTitle are required",
-        });
+    if (!firstName || !lastName || !professionalTitle) {
+      return res.status(400).json({
+        error: "firstName, lastName, and professionalTitle are required",
+      });
     }
 
-    const normalizedEmail = String(email).trim().toLowerCase();
+    const normalizedEmail = String(req.user!.email).trim().toLowerCase();
     const normalizedFirstName = String(firstName).trim();
     const normalizedLastName = String(lastName).trim();
     const normalizedName = `${normalizedFirstName} ${normalizedLastName}`.trim();
+    const existingUser = await User.findById(req.user!._id).select(
+      "profile.isListed profile.availability"
+    );
 
-    const user = await User.findOneAndUpdate(
-      { email: normalizedEmail },
+    const user = await User.findByIdAndUpdate(
+      req.user!._id,
       {
         name: normalizedName,
         email: normalizedEmail,
@@ -206,9 +303,11 @@ app.post("/api/users/profile", async (req, res) => {
           currentRole: String(currentRole || "").trim(),
           currentCompany: String(currentCompany || "").trim(),
           summary: String(summary || "").trim(),
+          availability: existingUser?.profile?.availability ?? normalizeAvailability([]),
+          isListed: existingUser?.profile?.isListed ?? false,
         },
       },
-      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+      { new: true, runValidators: true }
     );
 
     res.status(201).json(user);

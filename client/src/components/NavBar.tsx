@@ -4,6 +4,10 @@ import styles from './NavBar.module.css'
 
 export default function NavBar() {
   const { user, loading, logout } = useAuth()
+  const rawProfilePhotoUrl = user?.profile?.profilePhotoUrl
+  const profilePhotoUrl =
+    typeof rawProfilePhotoUrl === 'string' && rawProfilePhotoUrl.trim() ? rawProfilePhotoUrl : null
+  const avatarLabel = user?.name?.trim()?.[0] || user?.email?.trim()?.[0] || '?'
 
   return (
     <nav className={styles.navbar}>
@@ -15,12 +19,14 @@ export default function NavBar() {
           <span className={styles.userEmail}>...</span>
         ) : user ? (
           <>
-            <span className={styles.userEmail}>{user.email}</span>
-            <button
-              type="button"
-              className={styles.logout}
-              onClick={() => logout()}
-            >
+            <Link to="/profile-builder" className={styles.avatarLink} title="Create or edit profile">
+              {profilePhotoUrl ? (
+                <img className={styles.avatarImage} src={profilePhotoUrl} alt="Your profile" />
+              ) : (
+                <span className={styles.avatarFallback}>{avatarLabel.toUpperCase()}</span>
+              )}
+            </Link>
+            <button type="button" className={styles.logout} onClick={() => logout()}>
               Log out
             </button>
           </>

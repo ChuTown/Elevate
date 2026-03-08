@@ -14,6 +14,7 @@ export interface ApiUser {
   profile?: {
     firstName?: string;
     lastName?: string;
+    profilePhotoUrl?: string;
     professionalTitle?: string;
     [key: string]: unknown;
   };

@@ -13,6 +13,29 @@ const profileSchema = new mongoose.Schema(
     currentRole: { type: String, trim: true, default: "" },
     currentCompany: { type: String, trim: true, default: "" },
     summary: { type: String, trim: true, default: "" },
+    isListed: { type: Boolean, default: false },
+    availability: {
+      type: [[Number]],
+      default: () => Array.from({ length: 9 }, () => Array.from({ length: 5 }, () => 0)),
+      validate: {
+        validator: (value: unknown) => {
+          if (!Array.isArray(value) || value.length !== 9) return false;
+          return value.every(
+            (row) =>
+              Array.isArray(row) &&
+              row.length === 5 &&
+              row.every(
+                (cell) =>
+                  typeof cell === "number" &&
+                  Number.isFinite(cell) &&
+                  cell >= 0 &&
+                  cell <= 1
+              )
+          );
+        },
+        message: "availability must be a 9x5 matrix with values between 0 and 1",
+      },
+    },
   },
   { _id: false }
 );

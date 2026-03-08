@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import styles from './ProfileDetailsPage.module.css'
 
 type UserProfile = {
@@ -13,6 +14,7 @@ type UserProfile = {
   currentRole: string
   currentCompany: string
   summary: string
+  availability?: number[][]
 }
 
 type ProfileUser = {
@@ -111,6 +113,10 @@ export default function ProfileDetailsPage() {
         <article className={styles.panelWide}>
           <h2>Contact</h2>
           <p>{user.email}</p>
+        </article>
+        <article className={styles.panelWide}>
+          <h2>Weekly Availability</h2>
+          <AvailabilityCalendar value={profile.availability ?? []} readOnly />
         </article>
       </section>
     </main>

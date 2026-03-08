@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 type ProfileFormState = {
-  email: string
   firstName: string
   lastName: string
   profilePhotoUrl: string
@@ -18,8 +18,8 @@ type ProfileFormState = {
 }
 
 export default function ProfileBuilder() {
+  const { user } = useAuth()
   const [form, setForm] = useState<ProfileFormState>({
-    email: '',
     firstName: '',
     lastName: '',
     profilePhotoUrl: '',
@@ -53,8 +53,8 @@ export default function ProfileBuilder() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (!form.email || !form.firstName || !form.lastName || !form.professionalTitle) {
-      setMessage('Please complete email, first name, last name, and title.')
+    if (!form.firstName || !form.lastName || !form.professionalTitle) {
+      setMessage('Please complete first name, last name, and title.')
       return
     }
 
@@ -110,7 +110,6 @@ export default function ProfileBuilder() {
 
       setMessage('Profile saved to backend.')
       setForm({
-        email: '',
         firstName: '',
         lastName: '',
         profilePhotoUrl: '',
@@ -138,19 +137,10 @@ export default function ProfileBuilder() {
   return (
     <main className="profile-builder">
       <h1>Create Your Professional Profile</h1>
-      <p>Build a basic professional profile with your role and experience.</p>
+      <p>Build your profile for the currently logged-in account.</p>
+      {user && <p>Signed in as: {user.email}</p>}
 
       <form onSubmit={handleSubmit}>
-        <label htmlFor="email">Email</label>
-        <input
-          id="email"
-          type="email"
-          value={form.email}
-          onChange={(event) => updateField('email', event.target.value)}
-          placeholder="jordan@example.com"
-          required
-        />
-
         <label htmlFor="firstName">First name</label>
         <input
           id="firstName"
@@ -244,7 +234,7 @@ export default function ProfileBuilder() {
 
       {message && <p>{message}</p>}
       <p>
-        <Link to="/">Back to home</Link>
+        <Link to="/availability">Set availability and listing status</Link>
       </p>
     </main>
   )

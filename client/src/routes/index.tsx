@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import HomePage from '../pages/HomePage'
 import CreateProfile from '../pages/CreateProfile'
 import ProfileBuilder from '../pages/ProfileBuilder'
+import AvailabilityPage from '../pages/AvailabilityPage'
 import LoginPage from '../pages/LoginPage'
 import ProfileDetailsPage from '../pages/ProfileDetailsPage'
 import ProtectedRoute from '../components/ProtectedRoute'
@@ -25,6 +26,14 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <ProfileBuilder />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/availability"
+        element={
+          <ProtectedRoute>
+            <AvailabilityPage />
           </ProtectedRoute>
         }
       />
