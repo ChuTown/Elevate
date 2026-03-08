@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ProfessionalCard from '../components/ProfessionalCard'
+import { useAuth } from '../contexts/AuthContext'
+import { useViewMode } from '../contexts/ViewModeContext'
 import styles from './HomePage.module.css'
 
 type FeaturedProfessional = {
@@ -28,6 +30,10 @@ export default function HomePage() {
   const [featured, setFeatured] = useState<FeaturedProfessional[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const { user, loading: authLoading } = useAuth()
+  const { viewMode } = useViewMode()
+
+  const canManageAvailability = !authLoading && Boolean(user?.profile) && viewMode === 'professional'
 
   useEffect(() => {
     let eventSource: EventSource | null = null
@@ -96,9 +102,11 @@ export default function HomePage() {
     <main className={styles.page}>
       <h1>Home</h1>
       <p>Welcome to Elevate.</p>
-      <p>
-        <Link to="/availability">Set your availability and list yourself on homepage</Link>
-      </p>
+      {canManageAvailability && (
+        <p>
+          <Link to="/availability">Set your availability and list yourself on homepage</Link>
+        </p>
+      )}
       <p>
         <Link to="/professionals">All professionals</Link>
       </p>
