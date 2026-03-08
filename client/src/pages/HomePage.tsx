@@ -62,6 +62,7 @@ export default function HomePage() {
             professional.profile ? (
               <ProfessionalCard
                 key={professional._id}
+                userId={professional._id}
                 name={professional.name}
                 profile={professional.profile}
               />

@@ -75,6 +75,21 @@ app.get("/api/users/featured", async (req, res) => {
   }
 });
 
+app.get("/api/users/:id", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("name email profile");
+    if (!user || !user.profile) {
+      return res.status(404).json({ error: "User profile not found" });
+    }
+    res.json(user);
+  } catch (err) {
+    if (err instanceof mongoose.Error.CastError) {
+      return res.status(404).json({ error: "User profile not found" });
+    }
+    res.status(500).json({ error: "Failed to fetch user profile" });
+  }
+});
+
 app.post("/api/users", async (req, res) => {
   try {
     const { name, email } = req.body;

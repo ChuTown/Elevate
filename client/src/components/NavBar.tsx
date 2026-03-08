@@ -10,9 +10,6 @@ export default function NavBar() {
       <Link to="/" className={styles.brand}>
         Elevate
       </Link>
-      <div className={styles.links}>
-        <Link to="/">Home</Link>
-      </div>
       <div className={styles.auth}>
         {loading ? (
           <span className={styles.userEmail}>...</span>
