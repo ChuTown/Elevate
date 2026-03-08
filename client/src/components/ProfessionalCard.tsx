@@ -19,6 +19,8 @@ type ProfessionalCardProps = {
   userId: string
   name: string
   profile: ProfessionalProfile
+  averageRating?: number
+  totalRatings?: number
 }
 
 function truncate(text: string, maxChars: number) {
@@ -26,7 +28,18 @@ function truncate(text: string, maxChars: number) {
   return `${text.slice(0, maxChars).trimEnd()}...`
 }
 
-export default function ProfessionalCard({ userId, name, profile }: ProfessionalCardProps) {
+function renderStars(rating: number) {
+  const rounded = Math.max(0, Math.min(5, Math.round(rating)))
+  return '★'.repeat(rounded) + '☆'.repeat(5 - rounded)
+}
+
+export default function ProfessionalCard({
+  userId,
+  name,
+  profile,
+  averageRating = 0,
+  totalRatings = 0,
+}: ProfessionalCardProps) {
   const title = profile.currentRole || profile.professionalTitle
   const company = profile.currentCompany ? ` at ${profile.currentCompany}` : ''
   const industry = profile.primaryIndustry || 'General'
@@ -46,6 +59,9 @@ export default function ProfessionalCard({ userId, name, profile }: Professional
         <h3 className={styles.name}>{name}</h3>
         <p className={styles.title}>{title}{company}</p>
         <p className={styles.meta}>{profile.yearsOfExperience}+ yrs • {industry}</p>
+        <p className={styles.meta}>
+          {renderStars(averageRating)} {totalRatings > 0 ? `${averageRating.toFixed(1)} (${totalRatings})` : 'No ratings yet'}
+        </p>
         <p className={styles.meta}>{hourlyRateLabel}</p>
         {profile.location && <p className={styles.meta}>{profile.location}</p>}
         <p className={styles.summary}>{summary}</p>

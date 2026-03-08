@@ -6,6 +6,8 @@ import styles from './HomePage.module.css'
 type FeaturedProfessional = {
   _id: string
   name: string
+  averageRating?: number
+  totalRatings?: number
   profile: {
     firstName: string
     lastName: string
@@ -112,6 +114,8 @@ export default function HomePage() {
                 userId={professional._id}
                 name={professional.name}
                 profile={professional.profile}
+                averageRating={professional.averageRating}
+                totalRatings={professional.totalRatings}
               />
             ) : null,
           )}

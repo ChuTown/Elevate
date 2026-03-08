@@ -58,14 +58,25 @@ function normalizeAvailability(value: unknown) {
 }
 
 async function fetchFeaturedUsers() {
-  return User.find({
+  const users = await User.find({
     profile: { $exists: true, $ne: null },
     "profile.isListed": true,
   })
     .sort({ updatedAt: -1 })
     .limit(8)
-    .select("name email profile")
+    .select("name email profile reviews")
     .lean();
+
+  return users.map((user) => {
+    const reviews = Array.isArray(user.reviews) ? user.reviews : [];
+    const totalRatings = reviews.length;
+    const averageRating =
+      totalRatings > 0
+        ? Number((reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / totalRatings).toFixed(1))
+        : 0;
+
+    return { ...user, averageRating, totalRatings };
+  });
 }
 
 function writeFeaturedEvent(res: Response, payload: unknown) {
@@ -197,16 +208,82 @@ app.post("/api/users/me/availability", requireAuth, async (req: RequestWithSessi
 
 app.get("/api/users/:id", async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select("name email profile");
+    const user = await User.findById(req.params.id).select("name email profile reviews");
     if (!user || !user.profile) {
       return res.status(404).json({ error: "User profile not found" });
     }
-    res.json(user);
+    const reviews = Array.isArray(user.reviews) ? user.reviews : [];
+    const totalRatings = reviews.length;
+    const averageRating =
+      totalRatings > 0
+        ? Number((reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / totalRatings).toFixed(1))
+        : 0;
+
+    res.json({ ...user.toObject(), averageRating, totalRatings });
   } catch (err) {
     if (err instanceof mongoose.Error.CastError) {
       return res.status(404).json({ error: "User profile not found" });
     }
     res.status(500).json({ error: "Failed to fetch user profile" });
+  }
+});
+
+app.post("/api/users/:id/reviews", requireAuth, async (req: RequestWithSession, res) => {
+  try {
+    const rating = Number(req.body?.rating);
+    const comment = String(req.body?.comment || "").trim();
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: "rating must be an integer from 1 to 5" });
+    }
+
+    const targetUser = await User.findById(req.params.id).select("reviews");
+    if (!targetUser) {
+      return res.status(404).json({ error: "Professional not found" });
+    }
+    if (String(targetUser._id) === String(req.user!._id)) {
+      return res.status(400).json({ error: "You cannot review yourself" });
+    }
+
+    const existingReview = targetUser.reviews.find(
+      (review) => String(review.reviewerId) === String(req.user!._id)
+    );
+
+    if (existingReview) {
+      existingReview.rating = rating;
+      existingReview.comment = comment;
+      existingReview.updatedAt = new Date();
+    } else {
+      targetUser.reviews.push({
+        reviewerId: req.user!._id,
+        reviewerName: String(req.user!.name || req.user!.email),
+        reviewerEmail: String(req.user!.email),
+        rating,
+        comment,
+        updatedAt: new Date(),
+      });
+    }
+
+    await targetUser.save();
+
+    const reviews = targetUser.reviews;
+    const totalRatings = reviews.length;
+    const averageRating =
+      totalRatings > 0
+        ? Number((reviews.reduce((sum, review) => sum + Number(review.rating || 0), 0) / totalRatings).toFixed(1))
+        : 0;
+
+    res.status(201).json({
+      averageRating,
+      totalRatings,
+      reviews: targetUser.reviews
+        .slice()
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
+    });
+  } catch (err) {
+    if (err instanceof mongoose.Error.CastError) {
+      return res.status(404).json({ error: "Professional not found" });
+    }
+    res.status(500).json({ error: "Failed to submit review" });
   }
 });
 

@@ -25,6 +25,17 @@ type ProfileUser = {
   _id: string
   name: string
   email: string
+  averageRating?: number
+  totalRatings?: number
+  reviews?: Array<{
+    _id: string
+    reviewerId: string
+    reviewerName: string
+    reviewerEmail: string
+    rating: number
+    comment?: string
+    updatedAt: string
+  }>
   profile: UserProfile
 }
 
@@ -40,6 +51,10 @@ export default function ProfileDetailsPage() {
   const [selectedSlot, setSelectedSlot] = useState<{ rowIndex: number; colIndex: number } | null>(null)
   const [isRequesting, setIsRequesting] = useState(false)
   const [requestMessage, setRequestMessage] = useState<string | null>(null)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
+  const [reviewMessage, setReviewMessage] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadUserProfile() {
@@ -88,6 +103,11 @@ export default function ProfileDetailsPage() {
     ? `${AVAILABILITY_DAYS[selectedSlot.colIndex]} ${AVAILABILITY_HOURS[selectedSlot.rowIndex]}`
     : null
 
+  function renderStars(rating: number) {
+    const rounded = Math.max(0, Math.min(5, Math.round(rating)))
+    return '★'.repeat(rounded) + '☆'.repeat(5 - rounded)
+  }
+
   async function submitRequest() {
     if (!selectedSlot || !userId) return
     setIsRequesting(true)
@@ -114,6 +134,45 @@ export default function ProfileDetailsPage() {
     }
   }
 
+  async function submitReview() {
+    if (!userId) return
+    setIsSubmittingReview(true)
+    setReviewMessage('Submitting review...')
+    try {
+      const response = await fetch(`/api/users/${encodeURIComponent(userId)}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: reviewRating, comment: reviewComment }),
+      })
+      const result = (await response.json()) as {
+        error?: string
+        averageRating?: number
+        totalRatings?: number
+        reviews?: ProfileUser['reviews']
+      }
+      if (!response.ok) {
+        setReviewMessage(result.error || 'Failed to submit review.')
+        return
+      }
+      setReviewMessage('Review submitted.')
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              averageRating: result.averageRating ?? prev.averageRating,
+              totalRatings: result.totalRatings ?? prev.totalRatings,
+              reviews: result.reviews ?? prev.reviews,
+            }
+          : prev,
+      )
+      setReviewComment('')
+    } catch {
+      setReviewMessage('Unable to reach backend right now.')
+    } finally {
+      setIsSubmittingReview(false)
+    }
+  }
+
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
@@ -131,6 +190,12 @@ export default function ProfileDetailsPage() {
           </p>
           <p className={styles.meta}>
             {Number.isFinite(Number(profile.hourlyRate)) ? `$${Number(profile.hourlyRate)}/hr` : '$0/hr'}
+          </p>
+          <p className={styles.meta}>
+            {renderStars(user.averageRating || 0)}{' '}
+            {user.totalRatings && user.totalRatings > 0
+              ? `${(user.averageRating || 0).toFixed(1)} from ${user.totalRatings} review(s)`
+              : 'No ratings yet'}
           </p>
           <Link className={styles.chatLink} to={`/chat/${user._id}`}>
             Open chat
@@ -179,6 +244,60 @@ export default function ProfileDetailsPage() {
             </p>
           )}
           {requestMessage && <p>{requestMessage}</p>}
+        </article>
+        <article className={styles.panelWide}>
+          <h2>Ratings & Reviews</h2>
+          {sessionUser ? (
+            <div>
+              <label htmlFor="reviewRating">Your rating</label>
+              <select
+                id="reviewRating"
+                value={reviewRating}
+                onChange={(event) => setReviewRating(Number(event.target.value))}
+              >
+                {[5, 4, 3, 2, 1].map((value) => (
+                  <option key={value} value={value}>
+                    {value} star{value > 1 ? 's' : ''}
+                  </option>
+                ))}
+              </select>
+
+              <label htmlFor="reviewComment">Your review</label>
+              <textarea
+                id="reviewComment"
+                rows={3}
+                value={reviewComment}
+                onChange={(event) => setReviewComment(event.target.value)}
+                placeholder="Share your experience (optional)"
+              />
+              <p>
+                <button type="button" disabled={isSubmittingReview} onClick={submitReview}>
+                  {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+                </button>
+              </p>
+              {reviewMessage && <p>{reviewMessage}</p>}
+            </div>
+          ) : (
+            <p>
+              <Link to="/login">Log in</Link> to leave a review.
+            </p>
+          )}
+
+          <hr />
+          <ul>
+            {(user.reviews || [])
+              .slice()
+              .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+              .map((review) => (
+                <li key={review._id}>
+                  <p>
+                    <strong>{review.reviewerName}</strong> - {renderStars(review.rating)} ({review.rating}/5)
+                  </p>
+                  {review.comment && <p>{review.comment}</p>}
+                </li>
+              ))}
+          </ul>
+          {(!user.reviews || user.reviews.length === 0) && <p>No reviews yet.</p>}
         </article>
       </section>
     </main>

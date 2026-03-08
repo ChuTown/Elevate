@@ -16,6 +16,18 @@ const scheduleRequestSchema = new mongoose.Schema(
   { _id: true }
 );
 
+const reviewSchema = new mongoose.Schema(
+  {
+    reviewerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    reviewerName: { type: String, required: true, trim: true },
+    reviewerEmail: { type: String, required: true, trim: true },
+    rating: { type: Number, required: true, min: 1, max: 5 },
+    comment: { type: String, trim: true, default: "" },
+    updatedAt: { type: Date, default: Date.now },
+  },
+  { _id: true }
+);
+
 const profileSchema = new mongoose.Schema(
   {
     firstName: { type: String, required: true, trim: true },
@@ -63,6 +75,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     profile: { type: profileSchema, required: false },
     scheduleRequests: { type: [scheduleRequestSchema], default: [] },
+    reviews: { type: [reviewSchema], default: [] },
   },
   { timestamps: true }
 );
