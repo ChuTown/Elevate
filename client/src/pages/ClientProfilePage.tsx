@@ -208,7 +208,7 @@ export default function ClientProfilePage() {
         </form>
 
         <section className={styles.previewCard}>
-          <h2>Current client profile</h2>
+          <h2>Preview</h2>
           <p className={styles.previewName}>
             {`${clientProfile.firstName ?? ''} ${clientProfile.lastName ?? ''}`.trim() ||
               'No client name saved yet.'}
