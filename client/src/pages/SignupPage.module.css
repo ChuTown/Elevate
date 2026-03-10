@@ -1,16 +1,23 @@
 .page {
   display: grid;
+  place-items: center;
+  min-height: calc(100vh - 86px);
 }
 
 .card {
+  width: min(460px, 100%);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
   box-shadow: var(--shadow-sm);
-  padding: 1.15rem;
+  padding: 1.4rem;
 }
 
-.message {
-  margin-top: 0.85rem;
+.note {
   color: var(--color-text-muted);
+}
+
+.backLink {
+  display: block;
+  margin-top: 0.55rem;
 }

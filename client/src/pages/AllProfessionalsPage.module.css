@@ -1,17 +1,38 @@
 .page {
-  padding: var(--spacing-xl);
+  display: grid;
+  gap: 1rem;
+}
+
+.header {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  padding: 1rem 1.1rem;
 }
 
 .searchRow {
-  margin-top: 1rem;
+  margin-top: 0.15rem;
+}
+
+.searchInput {
+  background: var(--color-surface);
 }
 
 .layout {
-  margin-top: 1rem;
+  margin-top: 0.25rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;
   gap: 1rem;
   align-items: start;
+}
+
+.resultsPanel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  padding: 0.95rem;
 }
 
 .grid {
@@ -21,10 +42,11 @@
 }
 
 .filterPanel {
-  border: 1px solid var(--color-border, #d9dde3);
-  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
   padding: 0.85rem;
-  background: #fff;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
   position: sticky;
   top: 1rem;
 }
@@ -45,9 +67,9 @@
 
 .pill,
 .pillActive {
-  border: 1px solid var(--color-border, #d9dde3);
+  border: 1px solid var(--color-border);
   border-radius: 999px;
-  background: #fff;
+  background: var(--color-surface);
   color: inherit;
   padding: 0.3rem 0.65rem;
   font-size: 0.9rem;

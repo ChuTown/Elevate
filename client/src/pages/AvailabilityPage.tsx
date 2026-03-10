@@ -66,7 +66,9 @@ export default function AvailabilityPage() {
   if (loading) {
     return (
       <main className={styles.page}>
-        <p>Loading availability...</p>
+        <section className={styles.card}>
+          <p>Loading availability...</p>
+        </section>
       </main>
     )
   }
@@ -74,24 +76,28 @@ export default function AvailabilityPage() {
   if (!hasProfile) {
     return (
       <main className={styles.page}>
-        <h1>Availability & Listing</h1>
-        <p>Create your profile first before setting availability.</p>
-        <Link to="/profile-builder">Go to profile builder</Link>
+        <section className={styles.card}>
+          <h1>Availability & Listing</h1>
+          <p>Create your profile first before setting availability.</p>
+          <Link to="/profile-builder">Go to profile builder</Link>
+        </section>
       </main>
     )
   }
 
   return (
     <main className={styles.page}>
-      <h1>Availability & Listing</h1>
-      <p>Only your logged-in account can update these slots and listing status.</p>
-      <AvailabilityCalendar value={availability} onChange={setAvailability} />
+      <section className={styles.card}>
+        <h1>Availability & Listing</h1>
+        <p>Only your logged-in account can update these slots and listing status.</p>
+        <AvailabilityCalendar value={availability} onChange={setAvailability} />
 
-      <button type="button" disabled={isSaving} onClick={saveAvailability}>
-        {isSaving ? 'Saving...' : 'Save availability'}
-      </button>
+        <button type="button" disabled={isSaving} onClick={saveAvailability}>
+          {isSaving ? 'Saving...' : 'Save availability'}
+        </button>
 
-      {message && <p>{message}</p>}
+        {message && <p className={styles.message}>{message}</p>}
+      </section>
     </main>
   )
 }

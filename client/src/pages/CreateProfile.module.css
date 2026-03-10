@@ -1,3 +1,20 @@
 .page {
-  padding: var(--spacing-xl);
+  display: grid;
+  place-items: center;
+  min-height: calc(100vh - 86px);
+}
+
+.card {
+  width: min(620px, 100%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  padding: 1.4rem;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
 }

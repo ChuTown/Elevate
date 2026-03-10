@@ -62,15 +62,18 @@
 .photoPreview {
   width: 96px;
   height: 96px;
-  border-radius: 999px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
   object-fit: cover;
+  overflow: hidden;
   border: 1px solid var(--color-border);
 }
 
 .photoPlaceholder {
   width: 96px;
   height: 96px;
-  border-radius: 999px;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
   background: var(--color-border);
   display: flex;
   align-items: center;

@@ -114,12 +114,15 @@ export default function AllProfessionalsPage() {
 
   return (
     <main className={styles.page}>
-      <h1>All Professionals</h1>
-      <p>Search by name/role and refine from the filter panel.</p>
+      <section className={styles.header}>
+        <h1>All Professionals</h1>
+        <p>Search by name or role, then narrow results with the filters.</p>
+      </section>
 
       <div className={styles.searchRow}>
         <input
           id="searchFilter"
+          className={styles.searchInput}
           value={searchText}
           onChange={(event) => setSearchText(event.target.value)}
           placeholder="Search by name or role"
@@ -127,7 +130,7 @@ export default function AllProfessionalsPage() {
       </div>
 
       <div className={styles.layout}>
-        <section>
+        <section className={styles.resultsPanel}>
           {loading && <p>Loading professionals...</p>}
           {error && <p>{error}</p>}
           {!loading && !error && filteredProfessionals.length === 0 && (

@@ -100,16 +100,16 @@ export default function HomePage() {
 
   return (
     <main className={styles.page}>
-      <h1>Home</h1>
-      <p>Welcome to Elevate.</p>
-      {canManageAvailability && (
-        <p>
-          <Link to="/availability">Set your availability and list yourself on homepage</Link>
-        </p>
-      )}
-      <p>
-        <Link to="/professionals">All professionals</Link>
-      </p>
+      <section className={styles.hero}>
+        <h1>Find Trusted Professionals</h1>
+        <p>Browse profiles, request time slots, and chat directly before you book.</p>
+        <div className={styles.actions}>
+          <Link to="/professionals">Browse all professionals</Link>
+          {canManageAvailability && (
+            <Link to="/availability">Manage availability and homepage listing</Link>
+          )}
+        </div>
+      </section>
       <section className={styles.featuredSection}>
         <h2>Featured Professionals</h2>
         {loading && <p>Loading featured professionals...</p>}

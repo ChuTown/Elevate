@@ -6,10 +6,14 @@
   /* Colors */
   --color-primary: #2563eb;
   --color-primary-hover: #1d4ed8;
-  --color-text: #374151;
+  --color-text: #1f2937;
   --color-text-muted: #6b7280;
-  --color-border: #e5e5e5;
-  --color-bg: #ffffff;
+  --color-border: #dbe3ee;
+  --color-bg: #f4f7fb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8fafc;
+  --color-error: #b91c1c;
+  --color-success: #166534;
 
   /* Spacing */
   --spacing-xs: 0.25rem;
@@ -28,4 +32,8 @@
 
   /* Radius */
   --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+
+  /* Elevation */
+  --shadow-sm: 0 8px 18px rgb(15 23 42 / 0.05);
 }
